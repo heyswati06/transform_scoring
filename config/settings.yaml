@@ -1,0 +1,77 @@
+# ============================================================
+# DevOps Transformation Platform — Master Configuration
+# ============================================================
+# BEFORE RUNNING ANYTHING: fill every field marked [FILL THIS]
+# Secrets go in environment variables — never in this file.
+# ============================================================
+
+github:
+  base_url: "[FILL THIS] e.g. https://github.yourcompany.com/api/v3"
+  token_env: "GITHUB_TOKEN"          # export GITHUB_TOKEN=ghp_...
+  org: "[FILL THIS] e.g. myorg"
+  registry_repo: "devops-platform"   # the name of THIS repo in GitHub
+
+datasight:
+  base_url: "[FILL THIS] e.g. https://datasight.yourcompany.com"
+  token_env: "DATASIGHT_TOKEN"       # export DATASIGHT_TOKEN=...
+  # Field mappings — how DataSight names its metrics
+  # Adjust these if your DataSight instance uses different field names
+  field_map:
+    release_frequency:  "deployment_frequency"
+    ltdd:               "lead_time_days"
+    cfr:                "change_failure_rate"
+    mttr:               "mean_time_to_restore_hours"
+
+teambook:
+  base_url: "[FILL THIS] e.g. https://teambook.yourcompany.com"
+  token_env: "TEAMBOOK_TOKEN"        # export TEAMBOOK_TOKEN=...
+  # How to find a team lead email for an app in Teambook
+  team_lead_field: "lead_email"      # adjust if field name differs
+
+alerts:
+  email:
+    enabled: true
+    smtp_host: "[FILL THIS] e.g. smtp.yourcompany.com"
+    smtp_port: 587
+    smtp_user_env: "SMTP_USER"       # export SMTP_USER=devops-bot@company.com
+    smtp_pass_env: "SMTP_PASS"       # export SMTP_PASS=...
+    from_address: "[FILL THIS] e.g. devops-platform@yourcompany.com"
+    cc_champion: "[FILL THIS] your email — you're CC'd on every alert"
+
+# Registry repo settings
+registry:
+  apps_dir: "registry/apps"
+  intake_dir: "registry/intake"
+  # Branch name for intake files created by the bot
+  intake_branch_prefix: "intake"
+
+# Scoring configuration
+scoring:
+  # Portfolio RF target
+  portfolio_rf_target: 280
+  # Per-stack RF targets (releases per month per app)
+  rf_targets:
+    modern:      10
+    traditional:  5
+    legacy:       1.5
+    vendor:       0    # excluded from RF scoring
+  # LTDD target in days
+  ltdd_target: 1.8
+  # DPI pillar weights (must sum to 100)
+  weights:
+    velocity:    30
+    flow:        25
+    stability:   20
+    automation:  15
+    ai_adoption: 10
+
+# Scheduling (for scheduler.py — Phase 2 feature)
+schedule:
+  hygiene_check_cron:  "0 9 * * 1-5"   # Weekdays 9am
+  weekly_report_cron:  "0 8 * * 5"     # Friday 8am
+  alert_cooldown_hours: 24
+
+# Output
+reporting:
+  output_dir: "reports"
+  leaderboard_top_n: 70

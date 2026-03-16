@@ -1,0 +1,5 @@
+app_id,display_name,team_lead_email,stack,app_type,datasight_app_name
+payments-api,Payments API,jane.smith@company.com,java-spring,traditional,payments-api
+payments-ui,Payments UI,jane.smith@company.com,node,modern,payments-ui
+risk-engine,Risk Engine,bob.jones@company.com,dotnet,traditional,risk-engine
+customer-portal,Customer Portal,alice.wu@company.com,node,modern,customer-portal

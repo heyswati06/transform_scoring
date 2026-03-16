@@ -1,0 +1,161 @@
+# ============================================================
+# DPI APP REGISTRY — INTAKE TEMPLATE
+# ============================================================
+# HOW TO USE THIS FILE:
+#
+# OPTION A — Champion fills live during the interview call:
+#   1. Open this file in GitHub web editor during the 1:1
+#   2. Fill each field as the conversation happens
+#   3. Save as: registry/apps/{app-id}-intake.yaml
+#   4. Commit to branch: intake/{app-id}
+#   5. Raise PR — Person 3 reviews and converts to final YAML
+#
+# OPTION B — App owner fills async (if they missed the call):
+#   1. App owner opens this file in GitHub web editor
+#   2. Fills all fields and commits to branch: intake/{app-id}
+#   3. Raises PR with title: "Registry intake: {app-id}"
+#
+# SHAREPOINT FALLBACK:
+#   If GitHub access is not available, save a copy of this file
+#   to the SharePoint folder: DevOps Platform / App Registry Intake /
+#   The convert_intake_to_yaml.py script reads both locations.
+#
+# Fields marked [REQUIRED] must be filled.
+# Fields marked [DEFAULT: x] can be left as-is if the default is correct.
+# Fields marked [REGISTRY ONLY] are filled by Person 3 — leave blank.
+# ============================================================
+
+# ── IDENTITY ─────────────────────────────────────────────────
+app_id: ""                      # [REQUIRED] Unique slug. No spaces. e.g. "payments-api"
+display_name: ""                # [REQUIRED] Human name for leaderboard. e.g. "Payments API"
+datasight_app_id: ""            # [REGISTRY ONLY] Person 3 matches to DataSight app name
+teambook_team_id: ""            # [REGISTRY ONLY] Person 3 pulls from Teambook
+
+# ── TEAM ─────────────────────────────────────────────────────
+team_lead_email: ""             # [REQUIRED] Who receives alerts and owns the DPI score
+release_champion: ""            # [REQUIRED] Person driving releases. Can be same as team lead.
+                                # If same as team lead, just write: "same"
+
+# ── APP CLASSIFICATION ────────────────────────────────────────
+# [REQUIRED] Choose ONE:
+#   modern       — Cloud-native, full CI/CD possible, feature flags viable
+#   traditional  — On-prem or hybrid, CI possible, CD needs work
+#   legacy       — Infrequent releases, patch-driven, config changes
+#   vendor       — Release schedule controlled by vendor (iSeries, packaged apps)
+#                  NOTE: vendor apps are excluded from RF scoring.
+#                  Their DPI is calculated on 4 pillars only.
+app_type: ""
+
+# [REQUIRED] Primary tech stack:
+#   java-spring | dotnet | node | python | iSeries | vendor | mixed | other
+stack: ""
+
+# Is this app currently in production?
+# If false, pipeline runs via feature flags still count toward RF.
+in_production: true             # [DEFAULT: true]
+
+tier: 2                         # [DEFAULT: 2]  1=mission-critical  2=important  3=standard
+
+# ── GIT REPOSITORIES ─────────────────────────────────────────
+# [REQUIRED] List ALL Git repos for this app.
+# Remember: Git Org is created first — it CONTAINS the repos.
+# Declare: which git_org (the container), and which repo name inside it.
+# One app can have repos in MULTIPLE git orgs.
+# Mark exactly ONE repo as is_primary: true — this drives LTDD measurement.
+#
+# Example:
+#   - git_org: "myorg"
+#     repo_name: "payments-api"
+#     role: "backend"
+#     is_primary: true
+#   - git_org: "infra-org"         ← different git org, same app
+#     repo_name: "payments-infra"
+#     role: "infra"
+#     is_primary: false
+
+repos:
+  - git_org: ""                 # [REQUIRED] The GitHub org that contains this repo
+    repo_name: ""               # [REQUIRED] The repo name (just the name, not org/name)
+    role: "backend"             # [DEFAULT: backend]  backend | frontend | infra | shared-lib | config
+    is_primary: true            # Exactly one repo must be true. This drives LTDD.
+  # Add more repos as needed by duplicating the block above
+
+# ── PIPELINE FLAGS ────────────────────────────────────────────
+# These are your manual Y/N flags — each one directly feeds
+# the Automation pillar of the DPI score.
+# Answer honestly — these are improvement levers, not a test.
+
+ci_automated: false             # Does CI trigger automatically on every push? Y/N
+cd_automated: false             # Does deployment trigger automatically after CI? Y/N
+standard_pipeline_adopted: false  # Are you on the org standard pipeline template? Y/N
+git_hygiene_adopted: false      # Has the team formally adopted git hygiene practices? Y/N
+cr_auto_creation: false         # Are change requests auto-raised in ServiceNow? Y/N
+zero_touch_deployment: false    # Can you deploy with NO human intervention? Y/N
+automated_rollback: false       # Is rollback fully automated? Y/N
+feature_flags_adopted: false    # Are feature flags used to decouple deploy from release? Y/N
+
+# How many manual human approval gates exist in your pipeline today?
+# Count each person/team that must approve before production deploy.
+approval_gate_count: 0          # [REQUIRED] Enter the actual number, even if it's 5+
+
+# ── ACCESS & SECURITY ─────────────────────────────────────────
+# Does deploying to production REQUIRE a person with elevated/privileged access?
+# This is a DPI negative score — it structurally blocks zero-touch.
+# Be honest — this is the lever to improve, not a judgment.
+priv_access_for_deploy: true    # [DEFAULT: true — change to false if not required]
+
+# When was privileged access last formally reviewed?
+# Format: YYYY-MM-DD   Must be within 90 days for full compliance score.
+priv_access_reviewed_date: ""   # Leave blank if never reviewed
+
+# Is SAST or DAST security scanning in your pipeline?
+sast_enabled: false
+
+# Data sensitivity of this app's data
+data_classification: "internal"  # public | internal | restricted | confidential
+
+# ── DATASIGHT / TOOLING INTEGRATION ──────────────────────────
+# [REGISTRY ONLY] Person 3 fills these from tool config
+datasight_app_name: ""          # How this app appears in DataSight (for RF/LTDD matching)
+servicenow_ci_id: ""            # ServiceNow Configuration Item ID (for CFR/MTTR)
+jenkins_job_prefix: ""          # Jenkins job name prefix (e.g. "payments-")
+sonarqube_project: ""           # SonarQube project key (optional — if used)
+jira_project_key: ""            # Jira project key (e.g. "PAY")
+
+# ── COMPLIANCE ────────────────────────────────────────────────
+# These URLs are checked automatically — if the URL is unreachable, score is deducted.
+release_page_url: ""            # Confluence/SharePoint URL for release notes
+compliance_evidence_page: ""    # URL where compliance evidence is maintained
+
+# ── AI & ADOPTION ─────────────────────────────────────────────
+copilot_enabled: false          # Does the team have GitHub Copilot seats?
+ai_tools_declared: []           # List any AI tools used: ["github-copilot", "cursor", etc]
+ai_test_generation: false       # Using AI for test generation?
+apis_published: false           # Are this app's APIs in the org API catalog?
+catalog_url: ""                 # URL to API catalog entry
+api_count: 0                    # How many APIs does this app expose?
+
+# ── INTERVIEW CAPTURE (Champion fills during call) ────────────
+# These fields are NOT scored — they feed the improvement action plan
+# shown on each team's DPI scorecard and used by the champion for follow-up.
+
+biggest_release_blocker: ""
+# What is the single biggest blocker to releasing more frequently?
+# Write their exact words from the interview.
+
+last_release_description: ""
+# Brief description of what their last release involved (end-to-end).
+# Used to calibrate how realistic their targets are.
+
+agreed_rf_target_per_month: 0
+# The RF target per month that YOU AND THE APP OWNER agreed on during the call.
+# This becomes their personal target on the DPI scorecard.
+
+improvement_action_1: ""        # First concrete action they committed to
+improvement_action_2: ""        # Second action
+improvement_action_3: ""        # Third action
+
+notes: ""
+# Any other context about this app useful for scoring or conversations.
+# e.g. "App migrating to cloud in Q3 — legacy constraints temporary"
+# e.g. "Vendor contract expires June — release schedule improving after"

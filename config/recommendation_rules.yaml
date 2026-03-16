@@ -1,0 +1,299 @@
+# ============================================================
+# recommendation_rules.yaml
+# ============================================================
+# Rule-based improvement suggestions for the DPI score card.
+#
+# HOW RULES WORK:
+#   Each rule has a condition that is evaluated against the app's
+#   registry entry and score breakdown. If the condition is true,
+#   the action is added to the recommendation list.
+#
+#   Rules are ranked by points_gain (highest first).
+#   Interview-captured actions always appear before rule suggestions.
+#   Top 3 total are shown on each app's score card.
+#
+# HOW TO ADD A NEW RULE:
+#   Copy any existing rule block, change the id, write the condition,
+#   and fill in the action text. No Python code change needed.
+#   The engine picks it up on next run.
+#
+# CONDITION SYNTAX:
+#   Simple dot-notation path into the registry + comparison:
+#     pipeline_flags.cd_automated == false
+#     pipeline_flags.approval_gate_count >= 3
+#     access_security.priv_access_for_deploy == true
+#     score.velocity < 40
+#     score.automation < 50
+#     stack in [java-spring, dotnet, node, python]
+#     app_type == vendor         (use for vendor-specific rules)
+#     app_type != vendor         (use to skip vendor apps)
+#     in_production == true
+#
+# EFFORT LEVELS:
+#   low    = 1-2 hours, one person, no approvals needed
+#   medium = 1-3 days, some coordination needed
+#   high   = 1-2 weeks, multiple teams or approvals involved
+# ============================================================
+
+rules:
+
+  # ── AUTOMATION PILLAR ──────────────────────────────────────
+
+  - id: enable_cd
+    condition: "pipeline_flags.cd_automated == false"
+    action: "Enable CD — automate your deployment trigger"
+    detail: >
+      Your CI runs automatically but deployment still needs a manual trigger.
+      Configure your Jenkins deploy job to fire automatically after CI passes.
+      Once done, set cd_automated=true in your registry file.
+      This is the single highest-impact automation action for most teams.
+    pillar: Automation
+    points_gain: 4
+    effort: medium
+    skip_for_app_types: [vendor]
+
+  - id: enable_ci
+    condition: "pipeline_flags.ci_automated == false"
+    action: "Enable CI — make builds trigger automatically on every push"
+    detail: >
+      Your CI build does not trigger automatically when code is pushed.
+      Set up a webhook or pipeline trigger in Jenkins so every push to main
+      kicks off a build without anyone clicking a button.
+      This is the foundation for everything else in the Automation pillar.
+    pillar: Automation
+    points_gain: 3
+    effort: low
+    skip_for_app_types: [vendor]
+
+  - id: adopt_standard_pipeline
+    condition: "pipeline_flags.standard_pipeline_adopted == false"
+    action: "Migrate to the org standard pipeline template"
+    detail: >
+      Your pipeline uses a custom configuration instead of the org standard template.
+      The standard template includes pre-built quality gates, security scans,
+      and deployment patterns maintained centrally.
+      Contact the DevOps Champion to get the standard template for your stack.
+    pillar: Automation
+    points_gain: 3
+    effort: medium
+    skip_for_app_types: [vendor]
+
+  - id: enable_cr_auto_creation
+    condition: "pipeline_flags.cr_auto_creation == false"
+    action: "Automate change request creation in ServiceNow"
+    detail: >
+      Change requests are being created manually before each deployment.
+      Configure your pipeline to auto-raise a CR in ServiceNow using the
+      ServiceNow pipeline plugin or REST API call in the deploy stage.
+      Your ServiceNow CI ID is already in your registry — this is the hook.
+    pillar: Automation
+    points_gain: 3
+    effort: medium
+    skip_for_app_types: [vendor]
+
+  - id: enable_zero_touch
+    condition: "pipeline_flags.zero_touch_deployment == false and pipeline_flags.cd_automated == true and access_security.priv_access_for_deploy == false"
+    action: "Declare zero-touch deployment — you're already there"
+    detail: >
+      Your CD is automated and no privileged access is required for deployment.
+      You qualify for zero-touch deployment status.
+      Update zero_touch_deployment=true in your registry file to claim this score.
+      This takes 5 minutes and unlocks points immediately.
+    pillar: Automation
+    points_gain: 4
+    effort: low
+    skip_for_app_types: [vendor]
+
+  - id: enable_automated_rollback
+    condition: "pipeline_flags.automated_rollback == false and pipeline_flags.cd_automated == true"
+    action: "Add automated rollback to your CD pipeline"
+    detail: >
+      Your CD is automated but rollback still requires manual intervention.
+      Add a rollback stage to your Jenkins pipeline that triggers automatically
+      on deployment failure — redeploy the previous image/artifact.
+      This reduces MTTR and improves your Stability score.
+    pillar: Automation
+    points_gain: 2
+    effort: medium
+    skip_for_app_types: [vendor]
+
+  - id: adopt_feature_flags
+    condition: "pipeline_flags.feature_flags_adopted == false and app_type != vendor"
+    action: "Adopt feature flags to enable smaller, safer production deployments"
+    detail: >
+      Without feature flags, incomplete features block deployments — causing
+      big batches and low release frequency. Feature flags let you deploy
+      code to production with the feature hidden, then enable it when ready.
+      See the Feature Flags Architecture Guide for your specific platform.
+      This directly unlocks higher release frequency (RF).
+    pillar: Automation
+    points_gain: 2
+    effort: medium
+    skip_for_app_types: [vendor]
+
+  # ── FLOW PILLAR ────────────────────────────────────────────
+
+  - id: reduce_approval_gates_high
+    condition: "pipeline_flags.approval_gate_count >= 3"
+    action: "Reduce approval gates from {approval_gate_count} to 1 — this is your biggest flow blocker"
+    detail: >
+      You currently have {approval_gate_count} manual human approvals before
+      a production deployment. Each gate adds wait time to your LTDD.
+      Work with your approvers to consolidate into a single risk gate,
+      or replace manual approvals with automated quality checks (test pass,
+      security scan, coverage threshold). Target: 1 gate maximum.
+    pillar: Flow
+    points_gain: 6
+    effort: high
+    skip_for_app_types: []
+
+  - id: reduce_approval_gates_medium
+    condition: "pipeline_flags.approval_gate_count == 2"
+    action: "Reduce approval gates from 2 to 1"
+    detail: >
+      You have 2 manual approval gates in your pipeline. Consolidating to 1
+      will reduce your LTDD and improve your Flow score.
+      Identify which gate adds the most risk-reduction value and keep that one.
+      The other can likely be replaced with an automated quality check.
+    pillar: Flow
+    points_gain: 3
+    effort: medium
+    skip_for_app_types: []
+
+  - id: adopt_git_hygiene
+    condition: "pipeline_flags.git_hygiene_adopted == false"
+    action: "Formally adopt git hygiene standards — branch age, PR size, commit format"
+    detail: >
+      Your team has not formally adopted git hygiene practices.
+      This means stale branches, oversized PRs, and inconsistent commit messages
+      may be slowing down code review and integration.
+      Set git_hygiene_adopted=true after completing: branch age policy (<2 days),
+      PR size limit (<400 lines), and Conventional Commits format in place.
+    pillar: Flow
+    points_gain: 3
+    effort: low
+    skip_for_app_types: []
+
+  # ── STABILITY + SECURITY PILLAR ────────────────────────────
+
+  - id: review_privileged_access
+    condition: "access_security.priv_access_reviewed_date == '' or access_security.priv_access_reviewed_date == null"
+    action: "Complete privileged access review — never been done"
+    detail: >
+      Your privileged access has never been formally reviewed.
+      Schedule a 30-minute review with your security team to confirm
+      who has elevated access to your production systems and whether
+      each person still needs it. Record the date in your registry file.
+      Required every 90 days for full Stability score.
+    pillar: Stability
+    points_gain: 4
+    effort: low
+    skip_for_app_types: []
+
+  - id: refresh_privileged_access_review
+    condition: "access_security.priv_access_reviewed_stale == true"
+    action: "Refresh privileged access review — last review is over 90 days ago"
+    detail: >
+      Your privileged access review has expired (last done: {priv_access_reviewed_date}).
+      This is a 30-minute task: confirm current access holders with your security team
+      and update the date in your registry file. Required every 90 days.
+    pillar: Stability
+    points_gain: 4
+    effort: low
+    skip_for_app_types: []
+
+  - id: remove_priv_access_from_deploy
+    condition: "access_security.priv_access_for_deploy == true"
+    action: "Remove privileged access requirement from deployment process"
+    detail: >
+      Your deployments currently require someone with elevated/privileged access.
+      This is the #1 blocker to zero-touch deployment.
+      Work with your security team to move elevated-access steps (e.g. firewall
+      changes, secret rotation) out of the deployment pipeline, or pre-approve
+      them as part of a standard deployment runbook.
+    pillar: Stability
+    points_gain: 5
+    effort: high
+    skip_for_app_types: []
+
+  - id: enable_sast
+    condition: "access_security.sast_enabled == false and app_type != vendor"
+    action: "Add SAST security scanning to your pipeline"
+    detail: >
+      No security scanning is running in your pipeline.
+      Add a SAST scan stage using the org-approved tool (SonarQube or equivalent).
+      This automatically catches security vulnerabilities before they reach production
+      and contributes to your Stability score.
+    pillar: Stability
+    points_gain: 3
+    effort: medium
+    skip_for_app_types: [vendor]
+
+  - id: add_release_page
+    condition: "compliance.release_page_url == '' or compliance.release_page_url == null"
+    action: "Create and link a release notes page (Confluence or SharePoint)"
+    detail: >
+      No release page URL is registered for your app.
+      Create a Confluence or SharePoint page for your release notes and
+      add the URL to your registry file under compliance.release_page_url.
+      This is a 15-minute task that immediately improves your Stability score.
+    pillar: Stability
+    points_gain: 3
+    effort: low
+    skip_for_app_types: []
+
+  # ── VELOCITY PILLAR ────────────────────────────────────────
+
+  - id: increase_rf_batch_size
+    condition: "score.velocity < 40 and app_type != vendor and app_type != legacy"
+    action: "Reduce batch size — split large changes into smaller deployable units"
+    detail: >
+      Your release frequency is low, likely because changes are being batched
+      into large deployments. Break work into smaller units that can each
+      be deployed independently. Aim for PRs under 400 lines.
+      Each small deployment counts toward RF. More small deployments = higher score.
+    pillar: Velocity
+    points_gain: 8
+    effort: medium
+    skip_for_app_types: [vendor]
+
+  - id: increase_rf_legacy
+    condition: "score.velocity < 40 and app_type == legacy"
+    action: "Count patch releases and config changes toward your RF target"
+    detail: >
+      For legacy apps, every production deployment counts — including patches,
+      config updates, and dependency upgrades. Review your change log for the
+      last 3 months: were there changes applied directly to production
+      that bypassed the pipeline? Route these through the pipeline to get RF credit.
+    pillar: Velocity
+    points_gain: 5
+    effort: low
+    skip_for_app_types: [vendor]
+
+  # ── AI & ADOPTION PILLAR ───────────────────────────────────
+
+  - id: publish_api_catalog
+    condition: "ai_adoption.apis_published == false and ai_adoption.api_count > 0"
+    action: "Publish your {api_count} APIs to the org API catalog"
+    detail: >
+      You have {api_count} APIs but they are not published in the org catalog.
+      Publishing them enables discoverability, reduces duplicate API creation,
+      and contributes to your AI & Adoption score.
+      Contact the API platform team to get your APIs registered.
+    pillar: AI & Adoption
+    points_gain: 3
+    effort: low
+    skip_for_app_types: []
+
+  - id: declare_ai_tools
+    condition: "ai_adoption.copilot_enabled == false and ai_adoption.ai_tools_declared == []"
+    action: "Declare any AI coding tools your team is already using"
+    detail: >
+      If any team members are using AI tools informally (Copilot, Cursor, etc.),
+      formalise this by declaring them in your registry file under ai_tools_declared.
+      This takes 2 minutes and contributes to your AI & Adoption score.
+      Informal usage that is not declared gets no credit.
+    pillar: AI & Adoption
+    points_gain: 2
+    effort: low
+    skip_for_app_types: []
