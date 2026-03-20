@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feature Flags — Architecture Guide for Mixed Deployment Platforms</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+:root{--bg:#f8f6f2;--ink:#0f0d0a;--mid:#5a5550;--dim:#9a9490;--warm:#ece8e2;--rule:rgba(15,13,10,.1);
+  --green:#1a7a3c;--red:#c8382a;--blue:#1a5fb4;--gold:#c8832a;--teal:#0a7a5e;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--ink);padding:40px 32px;max-width:1000px;margin:0 auto;}
+h1{font-size:32px;font-weight:800;margin-bottom:8px;}
+h2{font-size:22px;font-weight:700;margin:36px 0 10px;}
+h3{font-size:16px;font-weight:700;margin:20px 0 8px;}
+p{font-size:14px;color:var(--mid);line-height:1.7;margin-bottom:12px;}
+.rule{height:1px;background:var(--rule);margin:32px 0;}
+
+.policy-box{background:var(--ink);border-radius:8px;padding:28px 32px;margin:24px 0;}
+.policy-box h2{color:#f8f6f2;margin-top:0;font-size:24px;}
+.policy-verdict{display:flex;gap:24px;margin-top:16px;}
+.verdict{flex:1;border-radius:6px;padding:16px 20px;}
+.verdict-yes{background:rgba(26,122,60,.15);border:1px solid rgba(26,122,60,.4);}
+.verdict-no {background:rgba(200,56,42,.15);border:1px solid rgba(200,56,42,.4);}
+.verdict-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;}
+.verdict-yes .verdict-label{color:#4ade80;}
+.verdict-no  .verdict-label{color:#f87171;}
+.verdict-text{font-size:13px;color:rgba(248,246,242,.7);line-height:1.6;}
+
+.platform-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:20px 0;}
+.plat{border-radius:8px;border:1px solid var(--rule);padding:20px;}
+.plat-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.plat-icon{font-size:24px;}
+.plat-name{font-size:15px;font-weight:700;}
+.plat-stack{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);margin-bottom:10px;}
+.plat-tool{font-size:13px;font-weight:600;color:var(--teal);margin-bottom:6px;}
+.plat-desc{font-size:13px;color:var(--mid);line-height:1.65;margin-bottom:10px;}
+.code-block{background:var(--ink);border-radius:5px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#a8d8a8;line-height:1.8;overflow-x:auto;margin:8px 0;}
+.code-block .comment{color:#5a6a5a;}
+.code-block .key{color:#7dd3fc;}
+.code-block .val{color:#fde68a;}
+
+.info{background:#f0f5ff;border-left:4px solid var(--blue);border-radius:0 4px 4px 0;padding:14px 18px;margin:12px 0;font-size:13px;color:#1a2e5a;line-height:1.6;}
+.warn{background:#fffbeb;border-left:4px solid var(--gold);border-radius:0 4px 4px 0;padding:14px 18px;margin:12px 0;font-size:13px;color:#5a3a00;line-height:1.6;}
+.correct{background:#f0fdf4;border-left:4px solid var(--green);border-radius:0 4px 4px 0;padding:14px 18px;margin:12px 0;font-size:13px;color:#1a4a28;line-height:1.6;}
+
+.pipeline-flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0;padding:16px;background:var(--warm);border-radius:6px;}
+.pf-step{background:white;border:1px solid var(--rule);border-radius:4px;padding:8px 14px;font-size:12px;font-weight:600;text-align:center;}
+.pf-step.deploy{border-color:var(--green);color:var(--green);}
+.pf-step.flag-off{border-color:var(--gold);color:var(--gold);}
+.pf-step.flag-on{border-color:var(--blue);color:var(--blue);}
+.pf-arrow{color:var(--dim);font-size:16px;}
+.rf-badge{background:var(--green);color:white;border-radius:3px;padding:2px 8px;font-size:10px;font-weight:700;}
+.no-rf-badge{background:var(--red);color:white;border-radius:3px;padding:2px 8px;font-size:10px;font-weight:700;}
+</style>
+</head>
+<body>
+
+<h1>🚩 Feature Flags — Architecture Guide</h1>
+<p>Platform-specific implementation across AWS, GCP, Internal Kubernetes, and On-Premise. Includes the definitive RF counting policy.</p>
+
+<div class="rule"></div>
+
+<!-- POLICY SECTION -->
+<div class="policy-box">
+  <h2>The RF Policy — Definitive Statement</h2>
+  <div class="policy-verdict">
+    <div class="verdict verdict-yes">
+      <div class="verdict-label">✓ Counts as RF</div>
+      <div class="verdict-text">
+        A <strong>production deployment</strong> — code reaches the production environment through the standard pipeline, regardless of whether a feature flag is ON or OFF.<br><br>
+        Example: Deploy payments-service v2.1 to prod with new payment flow hidden behind a flag = <strong>1 release counted.</strong>
+      </div>
+    </div>
+    <div class="verdict verdict-no">
+      <div class="verdict-label">✗ Does NOT count as RF</div>
+      <div class="verdict-text">
+        A pipeline run that deploys to Dev/Test/Staging only.<br><br>
+        A flag toggle (enabling a feature that was already deployed).<br><br>
+        A config change that doesn't go through the standard pipeline.<br><br>
+        Any deployment not captured in DataSight as a production deployment.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WHY FEATURE FLAGS HELP RF -->
+<h2>Why Feature Flags Increase RF (Indirectly)</h2>
+<p>Feature flags don't add RF points by themselves. They remove the psychological and technical barrier to releasing more frequently to production.</p>
+
+<div class="pipeline-flow">
+  <div class="pf-step">Code merged</div>
+  <div class="pf-arrow">→</div>
+  <div class="pf-step">CI passes</div>
+  <div class="pf-arrow">→</div>
+  <div class="pf-step deploy">Deploy to PROD <span class="rf-badge">+1 RF</span></div>
+  <div class="pf-arrow">→</div>
+  <div class="pf-step flag-off">Flag OFF<br><small>Feature hidden</small></div>
+  <div class="pf-arrow">→</div>
+  <div class="pf-step flag-on">Flag ON when ready<br><small>(no new deploy needed)</small></div>
+</div>
+
+<div class="correct">
+  <strong>The key insight:</strong> Without feature flags, teams wait until the whole feature is "done" before deploying — big batches, low RF. With feature flags, they deploy incomplete features safely to production every sprint, hidden behind a toggle. Each of those small deployments counts. RF increases naturally because releasing small is now safe.
+</div>
+
+<div class="rule"></div>
+
+<!-- PLATFORM IMPLEMENTATIONS -->
+<h2>Platform-Specific Implementation via Standard Pipeline</h2>
+<p>Each deployment platform requires a different technical approach. All approaches must be integrated into the org standard pipeline — no ad-hoc toggles.</p>
+
+<div class="platform-grid">
+
+  <!-- AWS -->
+  <div class="plat">
+    <div class="plat-header">
+      <div class="plat-icon">☁️</div>
+      <div class="plat-name">AWS</div>
+    </div>
+    <div class="plat-stack">Java/Spring · Node · Python on EC2/ECS/Lambda</div>
+    <div class="plat-tool">Recommended: AWS AppConfig</div>
+    <div class="plat-desc">
+      AWS AppConfig is the native feature flag service. Integrates with your Jenkins pipeline via the AWS CLI. Flag values are fetched at runtime — no redeployment needed to toggle.
+    </div>
+    <div class="code-block">
+<span class="comment"># In your standard Jenkins pipeline (Jenkinsfile):</span>
+stage('Deploy to Prod') {
+  steps {
+    <span class="comment"># Deploy the application code (THIS counts as RF)</span>
+    sh 'aws ecs update-service --cluster prod --service ${APP_NAME}'
+
+    <span class="comment"># Create/update feature flag config in AppConfig</span>
+    sh '''
+      aws appconfig deploy \
+        <span class="key">--application-id</span> <span class="val">${APPCONFIG_APP_ID}</span> \
+        <span class="key">--environment-id</span> <span class="val">prod</span> \
+        <span class="key">--configuration-profile-id</span> <span class="val">${FLAG_PROFILE_ID}</span> \
+        <span class="key">--deployment-strategy-id</span> <span class="val">AppConfig.Linear50PercentEvery30Seconds</span>
+    '''
+  }
+}
+    </div>
+    <div class="info">In your app code, check the flag:
+<code style="font-family:'JetBrains Mono',monospace;font-size:11px;">
+if (appConfigClient.isEnabled("new-payment-flow")) { ... }
+</code>
+    </div>
+  </div>
+
+  <!-- GCP -->
+  <div class="plat">
+    <div class="plat-header">
+      <div class="plat-icon">🌐</div>
+      <div class="plat-name">GCP</div>
+    </div>
+    <div class="plat-stack">Java · Node · Python on GKE/Cloud Run/GCE</div>
+    <div class="plat-tool">Recommended: Firebase Remote Config</div>
+    <div class="plat-desc">
+      Firebase Remote Config works for any GCP app — not just mobile. Flags are JSON values fetched at runtime. Alternatively, use GCP Secret Manager for simple boolean flags.
+    </div>
+    <div class="code-block">
+<span class="comment"># In your Jenkinsfile for GCP apps:</span>
+stage('Deploy to Prod') {
+  steps {
+    <span class="comment"># Deploy (counts as RF)</span>
+    sh 'gcloud run deploy ${SERVICE_NAME} --image gcr.io/${PROJECT}/${IMAGE}'
+
+    <span class="comment"># Update feature flag in Remote Config via REST API</span>
+    sh '''
+      curl -X PUT \
+        "https://firebaseremoteconfig.googleapis.com/v1/projects/${GCP_PROJECT}/remoteConfig" \
+        -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+        -H "Content-Type: application/json" \
+        -d '{"parameters": {"new_payment_flow": {"defaultValue": {"value": "false"}}}}'
+    '''
+  }
+}
+    </div>
+    <div class="info">Simpler alternative: use GCP Secret Manager with a naming convention like <code style="font-family:'JetBrains Mono',monospace;font-size:11px;">ff_new_payment_flow = "false"</code>. Toggle via gcloud CLI without a redeployment.</div>
+  </div>
+
+  <!-- Internal Kubernetes -->
+  <div class="plat">
+    <div class="plat-header">
+      <div class="plat-icon">⚙️</div>
+      <div class="plat-name">Internal Kubernetes (K8s)</div>
+    </div>
+    <div class="plat-stack">Any stack — deployed on internal K8s platform</div>
+    <div class="plat-tool">Recommended: ConfigMap-based flags</div>
+    <div class="plat-desc">
+      No external service needed. Use a dedicated ConfigMap for feature flags in each namespace. The pipeline deploys both the application AND updates the ConfigMap. App reads flags from the ConfigMap at startup or via a config reload endpoint.
+    </div>
+    <div class="code-block">
+<span class="comment"># feature-flags.yaml — checked into your repo</span>
+<span class="key">apiVersion:</span> <span class="val">v1</span>
+<span class="key">kind:</span> <span class="val">ConfigMap</span>
+<span class="key">metadata:</span>
+  <span class="key">name:</span> <span class="val">feature-flags</span>
+  <span class="key">namespace:</span> <span class="val">payments-prod</span>
+<span class="key">data:</span>
+  <span class="key">NEW_PAYMENT_FLOW:</span> <span class="val">"false"</span>    <span class="comment"># flip to "true" via kubectl or pipeline</span>
+  <span class="key">ENHANCED_SEARCH:</span>   <span class="val">"false"</span>
+
+<span class="comment">---</span>
+<span class="comment"># In Jenkinsfile:</span>
+stage('Deploy') {
+  steps {
+    <span class="comment"># Deploy app image (counts as RF)</span>
+    sh 'kubectl set image deployment/${APP} app=${NEW_IMAGE} -n payments-prod'
+    <span class="comment"># Apply feature flags ConfigMap (declarative)</span>
+    sh 'kubectl apply -f k8s/feature-flags.yaml -n payments-prod'
+  }
+}
+    </div>
+    <div class="warn">Flag values must be in a SEPARATE ConfigMap from app config — never mix feature flags with DB passwords or secrets. Flag ConfigMaps should be in Git and versioned with the app.</div>
+  </div>
+
+  <!-- On-Premise / Legacy -->
+  <div class="plat">
+    <div class="plat-header">
+      <div class="plat-icon">🏢</div>
+      <div class="plat-name">On-Premise / Traditional</div>
+    </div>
+    <div class="plat-stack">Java/Spring · .NET · Any legacy on-prem stack</div>
+    <div class="plat-tool">Recommended: Database-backed or config-file flags</div>
+    <div class="plat-desc">
+      For apps that can't use cloud services. Two approaches: (1) A shared flags table in an existing database, or (2) A properties/config file deployed alongside the app and read at startup.
+    </div>
+    <div class="code-block">
+<span class="comment"># Option A: Properties file (simplest)</span>
+<span class="comment"># feature-flags.properties — deployed with the app</span>
+<span class="key">feature.new_payment_flow</span>=<span class="val">false</span>
+<span class="key">feature.enhanced_search</span>=<span class="val">false</span>
+
+<span class="comment"># In Spring app:</span>
+@Value("${feature.new_payment_flow:false}")
+private boolean newPaymentFlowEnabled;
+
+<span class="comment">---</span>
+<span class="comment"># Option B: DB table (better for runtime toggling)</span>
+CREATE TABLE feature_flags (
+  flag_name VARCHAR(100) PRIMARY KEY,
+  enabled   BOOLEAN DEFAULT FALSE,
+  updated_at TIMESTAMP
+);
+<span class="comment"># Toggle without redeployment:</span>
+UPDATE feature_flags SET enabled=true WHERE flag_name='new_payment_flow';
+    </div>
+    <div class="info">For .NET apps: use <code style="font-family:'JetBrains Mono',monospace;font-size:11px;">Microsoft.FeatureManagement</code> NuGet package — it reads flags from appsettings.json and supports runtime toggling via Azure App Configuration or a local JSON file.</div>
+  </div>
+
+</div>
+
+<div class="rule"></div>
+
+<!-- STANDARD PIPELINE REQUIREMENTS -->
+<h2>Standard Pipeline Requirements for Feature Flags</h2>
+<p>Regardless of platform, ALL feature flag implementations must meet these standards to qualify for the <code style="font-family:'JetBrains Mono',monospace;font-size:12px;">feature_flags_adopted: true</code> registry flag.</p>
+
+<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;">
+  <thead>
+    <tr>
+      <th style="background:var(--ink);color:#f8f6f2;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Requirement</th>
+      <th style="background:var(--ink);color:#f8f6f2;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Rule</th>
+      <th style="background:var(--ink);color:#f8f6f2;padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Why</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid var(--rule);font-weight:600;">Declared in pipeline YAML</td><td style="padding:10px 14px;border-bottom:1px solid var(--rule);color:var(--mid);">Flags must be defined in pipeline config — no ad hoc toggles outside the pipeline</td><td style="padding:10px 14px;border-bottom:1px solid var(--rule);color:var(--mid);">Auditability, reproducibility</td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid var(--rule);font-weight:600;">Default to OFF</td><td style="padding:10px 14px;border-bottom:1px solid var(--rule);color:var(--mid);">New flags must default to false/off in all environments</td><td style="padding:10px 14px;border-bottom:1px solid var(--rule);color:var(--mid);">Safety — deploy never accidentally enables an incomplete feature</td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid var(--rule);font-weight:600;">Flag lifecycle tracked</td><td style="padding:10px 14px;border-bottom:1px solid var(--rule);color:var(--mid);">Flags older than 90 days without being enabled are "stale" and must be removed or renewed</td><td style="padding:10px 14px;border-bottom:1px solid var(--rule);color:var(--mid);">Prevents flag debt accumulating in codebase</td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid var(--rule);font-weight:600;">Naming convention</td><td style="padding:10px 14px;border-bottom:1px solid var(--rule);color:var(--mid);"><code style="font-family:'JetBrains Mono',monospace;font-size:11px;">ff_[feature_name]_[jira_ticket]</code> e.g. <code style="font-family:'JetBrains Mono',monospace;font-size:11px;">ff_new_checkout_PAY123</code></td><td style="padding:10px 14px;border-bottom:1px solid var(--rule);color:var(--mid);">Links feature to ticket, enables auto-cleanup when ticket closes</td></tr>
+    <tr><td style="padding:10px 14px;border-bottom:1px solid var(--rule);font-weight:600;">No direct prod toggle</td><td style="padding:10px 14px;border-bottom:1px solid var(--rule);color:var(--mid);">Enabling a flag in prod must go through a pipeline step or approved runbook — not a direct DB query or console click</td><td style="padding:10px 14px;border-bottom:1px solid var(--rule);color:var(--mid);">Change management compliance</td></tr>
+  </tbody>
+</table>
+
+<div class="warn">
+  <strong>For iSeries / Vendor apps:</strong> Feature flags are not applicable. These apps have externally-controlled release schedules. The <code style="font-family:'JetBrains Mono',monospace;font-size:11px;">feature_flags_adopted</code> flag should remain <code>false</code> for these apps and it does not affect their DPI score (RF is already excluded for vendor apps).
+</div>
+
+</body>
+</html>

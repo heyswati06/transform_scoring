@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DPI Portfolio RF Calculator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+:root {
+  --bg:#f8f6f2; --ink:#0f0d0a; --mid:#5a5550; --dim:#9a9490;
+  --warm:#ece8e2; --rule:rgba(15,13,10,0.1);
+  --green:#1a7a3c; --red:#c8382a; --blue:#1a5fb4;
+  --gold:#c8832a; --teal:#0a7a5e; --purple:#6b3fa0;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding:32px;}
+h1{font-size:28px;font-weight:800;margin-bottom:6px;}
+.sub{font-size:14px;color:var(--mid);margin-bottom:32px;line-height:1.6;}
+.sub em{color:var(--gold);font-style:normal;font-weight:600;}
+
+/* STACK CARDS */
+.stacks{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px;}
+.stack{border-radius:8px;border:1px solid var(--rule);padding:20px;background:white;}
+.stack-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.stack-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.stack-name{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.stack-desc{font-size:11px;color:var(--dim);margin-bottom:14px;line-height:1.5;}
+label{font-size:12px;color:var(--mid);font-weight:600;display:block;margin-bottom:4px;}
+input[type=number]{
+  width:100%;padding:8px 10px;border:1px solid var(--rule);border-radius:4px;
+  font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;
+  background:var(--warm);color:var(--ink);outline:none;
+  transition:border-color .2s;
+}
+input[type=number]:focus{border-color:var(--gold);}
+.rf-target{margin-top:12px;padding-top:10px;border-top:1px solid var(--rule);}
+.rf-target-label{font-size:11px;color:var(--dim);margin-bottom:4px;}
+.rf-target-input{display:flex;align-items:center;gap:6px;}
+input[type=range]{flex:1;accent-color:var(--gold);}
+.rf-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;width:60px;text-align:right;}
+.rf-note{font-size:10px;color:var(--dim);margin-top:4px;font-style:italic;}
+.excl-note{margin-top:10px;padding:6px 10px;background:#fff3cd;border-radius:3px;font-size:11px;color:#7a5000;}
+
+/* RESULTS */
+.results{background:white;border-radius:8px;border:1px solid var(--rule);padding:28px;margin-bottom:20px;}
+.results-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:24px;}
+.result-block{text-align:center;}
+.result-val{font-size:52px;font-weight:800;line-height:1;}
+.result-label{font-size:12px;color:var(--mid);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:4px;}
+.result-note{font-size:11px;color:var(--dim);margin-top:4px;}
+.status-bar{height:8px;border-radius:4px;background:var(--rule);overflow:hidden;margin:16px 0 8px;}
+.status-fill{height:100%;border-radius:4px;transition:width .4s ease, background .4s;}
+.status-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);}
+
+/* PER-STACK TABLE */
+.breakdown{width:100%;border-collapse:collapse;font-size:13px;margin-top:20px;}
+.breakdown th{background:var(--ink);color:white;padding:8px 12px;text-align:left;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;}
+.breakdown td{padding:9px 12px;border-bottom:1px solid var(--rule);}
+.breakdown tr:hover td{background:var(--warm);}
+.excl-row{background:#fff8f0 !important;}
+.excl-row td:nth-child(3){color:var(--gold);font-style:italic;}
+
+/* INDIVIDUAL APP SECTION */
+.app-section{background:white;border-radius:8px;border:1px solid var(--rule);padding:24px;margin-bottom:20px;}
+.app-section h2{font-size:18px;font-weight:800;margin-bottom:6px;}
+.app-section-desc{font-size:13px;color:var(--mid);margin-bottom:16px;line-height:1.6;}
+.app-row{display:grid;grid-template-columns:200px 120px 1fr 100px 120px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--rule);}
+.app-row:last-child{border-bottom:none;}
+.app-row-header{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--dim);}
+.app-name-input{padding:5px 8px;border:1px solid var(--rule);border-radius:3px;font-family:'Outfit',sans-serif;font-size:13px;width:100%;}
+.app-type-sel{padding:5px 8px;border:1px solid var(--rule);border-radius:3px;font-family:'Outfit',sans-serif;font-size:13px;background:var(--warm);}
+.app-target-display{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;text-align:center;}
+.app-target-excl{font-size:11px;color:var(--gold);text-align:center;}
+.btn-add{margin-top:12px;padding:8px 16px;background:var(--warm);border:1px solid var(--rule);border-radius:4px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;}
+.btn-add:hover{background:var(--rule);}
+.btn-remove{width:24px;height:24px;background:#fee2e2;border:none;border-radius:3px;cursor:pointer;font-size:12px;color:var(--red);}
+
+/* GUIDANCE */
+.guidance{background:var(--warm);border-radius:6px;padding:18px 20px;font-size:13px;color:var(--mid);line-height:1.7;margin-top:12px;}
+.guidance strong{color:var(--ink);}
+</style>
+</head>
+<body>
+
+<h1>📊 Portfolio RF Calculator</h1>
+<p class="sub">Enter your <em>actual app counts per stack type</em>. The calculator shows whether your portfolio reaches the 280 RF target and how much headroom you have. Adjust the per-app RF targets for each stack tier based on what's realistic for your teams.</p>
+
+<!-- STACK CONFIGURATION -->
+<div class="stacks">
+
+  <div class="stack" id="card-modern">
+    <div class="stack-header">
+      <div class="stack-dot" style="background:var(--green)"></div>
+      <span class="stack-name" style="color:var(--green)">Modern / Cloud-Native</span>
+    </div>
+    <div class="stack-desc">Full CI/CD possible. Feature flags. Trunk-based dev. Zero-touch achievable.</div>
+    <label>Number of apps in this category</label>
+    <input type="number" id="count-modern" value="0" min="0" max="70" oninput="calculate()">
+    <div class="rf-target">
+      <div class="rf-target-label">Target RF per app / month</div>
+      <div class="rf-target-input">
+        <input type="range" id="rf-modern" min="2" max="20" value="10" oninput="syncRange('modern');calculate()">
+        <span class="rf-val" id="rfval-modern">10</span>
+      </div>
+      <div class="rf-note">Typical range: 8–15. Fully automated teams can reach 20+.</div>
+    </div>
+  </div>
+
+  <div class="stack" id="card-traditional">
+    <div class="stack-header">
+      <div class="stack-dot" style="background:var(--blue)"></div>
+      <span class="stack-name" style="color:var(--blue)">Traditional / On-Prem</span>
+    </div>
+    <div class="stack-desc">On-prem infra. CI possible, CD needs work. Manual steps to remove.</div>
+    <label>Number of apps in this category</label>
+    <input type="number" id="count-traditional" value="0" min="0" max="70" oninput="calculate()">
+    <div class="rf-target">
+      <div class="rf-target-label">Target RF per app / month</div>
+      <div class="rf-target-input">
+        <input type="range" id="rf-traditional" min="1" max="12" value="5" oninput="syncRange('traditional');calculate()">
+        <span class="rf-val" id="rfval-traditional">5</span>
+      </div>
+      <div class="rf-note">Typical range: 3–6. Smaller batches + feature flags unlock more.</div>
+    </div>
+  </div>
+
+  <div class="stack" id="card-legacy">
+    <div class="stack-header">
+      <div class="stack-dot" style="background:var(--gold)"></div>
+      <span class="stack-name" style="color:var(--gold)">Legacy / Stabilised</span>
+    </div>
+    <div class="stack-desc">Infrequent releases. Patch-driven. Config changes count. Focus on LTDD.</div>
+    <label>Number of apps in this category</label>
+    <input type="number" id="count-legacy" value="0" min="0" max="70" oninput="calculate()">
+    <div class="rf-target">
+      <div class="rf-target-label">Target RF per app / month</div>
+      <div class="rf-target-input">
+        <input type="range" id="rf-legacy" min="0" max="4" value="1" step="0.5" oninput="syncRange('legacy');calculate()">
+        <span class="rf-val" id="rfval-legacy">1</span>
+      </div>
+      <div class="rf-note">Even 1/month is progress. Patches + compliance releases count.</div>
+    </div>
+  </div>
+
+  <div class="stack" id="card-vendor">
+    <div class="stack-header">
+      <div class="stack-dot" style="background:var(--red)"></div>
+      <span class="stack-name" style="color:var(--red)">Vendor / iSeries / Fixed</span>
+    </div>
+    <div class="stack-desc">Release schedule controlled externally. RF is not a lever here.</div>
+    <label>Number of apps in this category</label>
+    <input type="number" id="count-vendor" value="0" min="0" max="70" oninput="calculate()">
+    <div class="rf-target">
+      <div class="rf-target-label" style="color:var(--red);">RF Target</div>
+      <div class="excl-note">🔒 RF excluded from portfolio total. DPI scored on 4 pillars only (Flow, Stability, Automation, AI). Their DPI re-weighted to sum to 100 pts without Velocity.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- RESULTS -->
+<div class="results">
+  <div class="results-grid">
+    <div class="result-block">
+      <div class="result-val" id="total-apps" style="color:var(--gold)">0</div>
+      <div class="result-label">Total Apps</div>
+      <div class="result-note" id="vendor-note"></div>
+    </div>
+    <div class="result-block">
+      <div class="result-val" id="portfolio-rf" style="color:var(--ink)">0</div>
+      <div class="result-label">Portfolio RF / Month</div>
+      <div class="result-note">target: 280</div>
+    </div>
+    <div class="result-block">
+      <div class="result-val" id="headroom">–</div>
+      <div class="result-label">Headroom</div>
+      <div class="result-note" id="headroom-note">Enter your app counts above</div>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-fill" id="status-fill" style="width:0%;background:var(--dim)"></div>
+  </div>
+  <div class="status-labels">
+    <span>0</span>
+    <span style="position:relative;left:calc(280/350*100% - 16px)">280 target</span>
+    <span>350</span>
+  </div>
+
+  <div id="status-msg" style="margin-top:14px;font-size:14px;color:var(--mid);font-weight:500;"></div>
+
+  <table class="breakdown" id="breakdown-table" style="display:none;">
+    <thead>
+      <tr>
+        <th>Stack Category</th>
+        <th>App Count</th>
+        <th>RF Target/App/Month</th>
+        <th>Portfolio Contribution</th>
+        <th>DPI Velocity Basis</th>
+      </tr>
+    </thead>
+    <tbody id="breakdown-body"></tbody>
+    <tfoot>
+      <tr style="background:rgba(10,122,94,0.06);">
+        <td style="font-weight:700;color:var(--ink)">PORTFOLIO TOTAL</td>
+        <td id="ft-apps" style="font-weight:700;color:var(--ink)">—</td>
+        <td>—</td>
+        <td id="ft-rf" style="font-weight:700;font-size:15px;" class="app-target-display">—</td>
+        <td id="ft-status" style="font-weight:700;">—</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<!-- GUIDANCE -->
+<div class="guidance">
+  <strong>How to use this with app owners:</strong> During your interviews over the next 2 days, ask each app owner what stack category they are. After 70 meetings, enter the actual counts above. The model recalculates your achievable portfolio RF and shows whether you have headroom or a gap. If you have a gap, you know exactly which stack tier needs to have its per-app target raised — or you identify more apps that could be moved to "Modern" with investment.
+  <br><br>
+  <strong>For the leaderboard:</strong> Vendor/iSeries apps show a 🔒 badge next to their RF field with the label "RF Excluded — Vendor/Fixed App." Their DPI score card recalculates the 4 remaining pillars to sum to 100 points, so their total score is still comparable to other apps.
+</div>
+
+<script>
+function syncRange(type) {
+  const val = parseFloat(document.getElementById('rf-' + type).value);
+  document.getElementById('rfval-' + type).textContent = val % 1 === 0 ? val : val.toFixed(1);
+}
+
+function calculate() {
+  const counts = {
+    modern:      parseInt(document.getElementById('count-modern').value)      || 0,
+    traditional: parseInt(document.getElementById('count-traditional').value) || 0,
+    legacy:      parseInt(document.getElementById('count-legacy').value)       || 0,
+    vendor:      parseInt(document.getElementById('count-vendor').value)       || 0,
+  };
+  const rates = {
+    modern:      parseFloat(document.getElementById('rf-modern').value),
+    traditional: parseFloat(document.getElementById('rf-traditional').value),
+    legacy:      parseFloat(document.getElementById('rf-legacy').value),
+    vendor:      0, // excluded
+  };
+
+  const totalApps = Object.values(counts).reduce((a,b)=>a+b,0);
+  const contributions = {
+    modern:      counts.modern      * rates.modern,
+    traditional: counts.traditional * rates.traditional,
+    legacy:      counts.legacy      * rates.legacy,
+    vendor:      0,
+  };
+  const portfolioRF = contributions.modern + contributions.traditional + contributions.legacy;
+  const headroom = portfolioRF - 280;
+  const pct = Math.min(portfolioRF / 350 * 100, 100);
+
+  // Update total
+  document.getElementById('total-apps').textContent = totalApps;
+  document.getElementById('vendor-note').textContent = counts.vendor > 0
+    ? `incl. ${counts.vendor} vendor apps (RF excluded)` : '';
+
+  // Portfolio RF
+  const rfEl = document.getElementById('portfolio-rf');
+  rfEl.textContent = Math.round(portfolioRF);
+  rfEl.style.color = portfolioRF >= 280 ? 'var(--green)' : portfolioRF >= 220 ? 'var(--gold)' : 'var(--red)';
+
+  // Headroom
+  const hrEl = document.getElementById('headroom');
+  const hrNote = document.getElementById('headroom-note');
+  if (totalApps === 0) {
+    hrEl.textContent = '—';
+    hrEl.style.color = 'var(--dim)';
+    hrNote.textContent = 'Enter your app counts above';
+  } else if (headroom >= 0) {
+    hrEl.textContent = '+' + Math.round(headroom);
+    hrEl.style.color = 'var(--green)';
+    hrNote.textContent = 'Above target ✓ — buffer for laggards';
+  } else {
+    hrEl.textContent = Math.round(headroom);
+    hrEl.style.color = 'var(--red)';
+    hrNote.textContent = 'Gap to close — adjust targets or counts';
+  }
+
+  // Status bar
+  const fill = document.getElementById('status-fill');
+  fill.style.width = pct + '%';
+  fill.style.background = portfolioRF >= 280 ? 'var(--green)' : portfolioRF >= 220 ? 'var(--gold)' : 'var(--red)';
+
+  // Status message
+  const msg = document.getElementById('status-msg');
+  if (totalApps === 0) {
+    msg.textContent = '';
+  } else if (portfolioRF >= 280) {
+    msg.innerHTML = `<span style="color:var(--green);font-weight:700;">✓ Portfolio target achievable.</span> You have <strong>${Math.round(headroom)}</strong> releases/month of headroom — buffer for underperforming apps.`;
+  } else if (portfolioRF >= 220) {
+    msg.innerHTML = `<span style="color:var(--gold);font-weight:700;">⚠ Close but short by ${Math.round(280-portfolioRF)} releases/month.</span> Raise Modern or Traditional targets, or move more apps into a higher tier with investment.`;
+  } else {
+    msg.innerHTML = `<span style="color:var(--red);font-weight:700;">✗ Gap of ${Math.round(280-portfolioRF)} releases/month.</span> Significantly more automation investment needed, or reclassify apps that could move to Modern tier.`;
+  }
+
+  // Breakdown table
+  const table = document.getElementById('breakdown-table');
+  const body  = document.getElementById('breakdown-body');
+  if (totalApps > 0) {
+    table.style.display = 'table';
+    const rows = [
+      ['Modern / Cloud-Native', counts.modern, rates.modern, contributions.modern, 'Scored vs ' + rates.modern + '/month target', false, 'var(--green)'],
+      ['Traditional / On-Prem', counts.traditional, rates.traditional, contributions.traditional, 'Scored vs ' + rates.traditional + '/month target', false, 'var(--blue)'],
+      ['Legacy / Stabilised', counts.legacy, rates.legacy, contributions.legacy, 'Scored vs ' + rates.legacy + '/month target (LTDD weighted)', false, 'var(--gold)'],
+      ['Vendor / iSeries / Fixed', counts.vendor, '—', '—', '🔒 RF excluded. 4-pillar DPI only.', true, 'var(--red)'],
+    ];
+    body.innerHTML = rows.map(([name, count, rate, contrib, basis, excl, color]) => `
+      <tr class="${excl ? 'excl-row' : ''}">
+        <td style="font-weight:600;color:${color}">${name}</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-weight:700">${count}</td>
+        <td style="font-family:'JetBrains Mono',monospace">${excl ? '<span style="color:var(--gold)">EXCLUDED</span>' : rate + '/month'}</td>
+        <td style="font-family:'JetBrains Mono',monospace;font-weight:700;${excl?'color:var(--dim)':''}">${excl ? '—' : Math.round(contrib)}</td>
+        <td style="font-size:12px;color:var(--mid)">${basis}</td>
+      </tr>`).join('');
+
+    document.getElementById('ft-apps').textContent = totalApps;
+    const ftRf = document.getElementById('ft-rf');
+    ftRf.textContent = Math.round(portfolioRF) + '/month';
+    ftRf.style.color = portfolioRF >= 280 ? 'var(--green)' : 'var(--red)';
+    document.getElementById('ft-status').innerHTML = portfolioRF >= 280
+      ? `<span style="color:var(--green)">✓ Meets 280 target</span>`
+      : `<span style="color:var(--red)">✗ Short by ${Math.round(280-portfolioRF)}</span>`;
+  } else {
+    table.style.display = 'none';
+  }
+}
+
+// Init
+syncRange('modern'); syncRange('traditional'); syncRange('legacy');
+calculate();
+</script>
+</body>
+</html>

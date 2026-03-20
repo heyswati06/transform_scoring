@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DPI Platform — Final Design, Execution Plan & App Owner Guide</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg:    #f9f7f4;
+  --ink:   #12100e;
+  --mid:   #6b6560;
+  --dim:   #a09890;
+  --rule:  rgba(18,16,14,0.1);
+  --warm:  #ede9e3;
+
+  --vel:   #c8382a;
+  --flo:   #1a5fb4;
+  --sta:   #0a7a5e;
+  --aut:   #b86000;
+  --ai:    #6b3fa0;
+  --gold:  #c8832a;
+  --green: #1a7a3c;
+  --red:   #c8382a;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Bricolage Grotesque',sans-serif;background:var(--bg);color:var(--ink);line-height:1.65;font-size:15px;}
+
+/* NAV */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:300;height:48px;
+  background:var(--ink);display:flex;align-items:center;padding:0 32px;gap:4px;
+}
+.nb{font-size:13px;font-weight:700;color:var(--gold);margin-right:20px;white-space:nowrap;letter-spacing:.3px;}
+nav a{font-size:12px;color:rgba(249,247,244,.45);text-decoration:none;padding:4px 9px;border-radius:3px;transition:all .2s;white-space:nowrap;font-weight:500;}
+nav a:hover{color:#f9f7f4;background:rgba(255,255,255,.07);}
+
+/* PAGE */
+.page{max-width:1120px;margin:0 auto;padding:68px 36px 100px;}
+
+/* SECTION */
+.sec{margin-bottom:72px;}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;}
+.stitle{font-size:34px;font-weight:800;color:var(--ink);line-height:1.1;margin-bottom:10px;}
+.sdesc{font-size:15px;color:var(--mid);max-width:760px;line-height:1.75;margin-bottom:28px;}
+.rule{height:1px;background:linear-gradient(90deg,transparent,var(--rule),transparent);margin:60px 0;}
+
+/* HERO */
+.hero{background:var(--ink);border-radius:6px;padding:64px 56px 56px;margin-bottom:72px;position:relative;overflow:hidden;}
+.hero::after{content:'v4';position:absolute;right:-20px;bottom:-40px;font-size:220px;font-weight:800;color:rgba(255,255,255,.025);pointer-events:none;line-height:1;}
+.hero-tag{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:3px;text-transform:uppercase;margin-bottom:16px;}
+.hero h1{font-size:48px;font-weight:800;color:#f9f7f4;line-height:1.05;margin-bottom:14px;}
+.hero h1 span{color:var(--gold);}
+.hero-sub{font-size:15px;color:rgba(249,247,244,.5);max-width:680px;line-height:1.75;margin-bottom:40px;}
+.kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;}
+.kpi{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);padding:16px 18px;}
+.kpi-l{font-size:10px;color:rgba(249,247,244,.35);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.kpi-v{font-size:28px;font-weight:800;line-height:1;}
+.kpi-n{font-size:10px;color:rgba(249,247,244,.3);margin-top:4px;}
+.bad{color:#e05555;}.good{color:#4ade80;}.neutral{color:var(--gold);}
+
+/* CALLOUT BOXES */
+.box-correct{background:#f0fdf4;border:1px solid rgba(26,122,60,.25);border-left:4px solid var(--green);border-radius:4px;padding:20px 24px;margin-bottom:20px;font-size:14px;color:#1a4a28;line-height:1.7;}
+.box-info{background:#f0f5ff;border:1px solid rgba(26,95,180,.2);border-left:4px solid var(--flo);border-radius:4px;padding:20px 24px;margin-bottom:20px;font-size:14px;color:#1a2e5a;line-height:1.7;}
+.box-warn{background:#fffbeb;border:1px solid rgba(200,131,42,.25);border-left:4px solid var(--gold);border-radius:4px;padding:20px 24px;margin-bottom:20px;font-size:14px;color:#5a3a00;line-height:1.7;}
+.box-insight{background:#fdf4ff;border:1px solid rgba(107,63,160,.2);border-left:4px solid var(--ai);border-radius:4px;padding:20px 24px;margin-bottom:20px;font-size:14px;color:#2d1a4a;line-height:1.7;}
+
+/* PILLAR CARDS — print-clear */
+.pillars{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:28px;}
+.pc{border-radius:6px;padding:24px 18px;border:1px solid var(--rule);}
+.pc-vel{background:rgba(200,56,42,.05);}
+.pc-flo{background:rgba(26,95,180,.05);}
+.pc-sta{background:rgba(10,122,94,.05);}
+.pc-aut{background:rgba(184,96,0,.05);}
+.pc-ai {background:rgba(107,63,160,.05);}
+.pc-bar{height:3px;border-radius:2px;margin-bottom:12px;}
+.pc-vel .pc-bar{background:var(--vel);}
+.pc-flo .pc-bar{background:var(--flo);}
+.pc-sta .pc-bar{background:var(--sta);}
+.pc-aut .pc-bar{background:var(--aut);}
+.pc-ai  .pc-bar{background:var(--ai);}
+.pc-pct{font-size:44px;font-weight:800;line-height:1;margin-bottom:2px;}
+.pc-vel .pc-pct{color:var(--vel);}
+.pc-flo .pc-pct{color:var(--flo);}
+.pc-sta .pc-pct{color:var(--sta);}
+.pc-aut .pc-pct{color:var(--aut);}
+.pc-ai  .pc-pct{color:var(--ai);}
+.pc-name{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.pc-src{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);margin-bottom:10px;}
+.pc-items{font-size:11.5px;color:var(--mid);line-height:2;}
+.pc-items span{display:block;border-bottom:1px solid rgba(18,16,14,.06);padding:1px 0;}
+.pc-items span:last-child{border-bottom:none;}
+.pc-note{margin-top:10px;font-size:11px;color:var(--dim);font-style:italic;line-height:1.5;border-top:1px solid var(--rule);padding-top:8px;}
+.stag{display:inline-block;padding:1px 5px;border-radius:2px;font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:600;margin-left:3px;}
+.s-ds {background:rgba(26,95,180,.1);color:var(--flo);}
+.s-tb {background:rgba(107,63,160,.1);color:var(--ai);}
+.s-gh {background:rgba(10,122,94,.1);color:var(--sta);}
+.s-reg{background:rgba(200,131,42,.1);color:var(--gold);}
+.s-man{background:rgba(200,56,42,.1);color:var(--vel);}
+
+/* EXTENSIBLE SCORING TABLE */
+.ext-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px;}
+.ext-table th{background:var(--ink);color:#f9f7f4;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:10px 14px;text-align:left;}
+.ext-table td{padding:10px 14px;border-bottom:1px solid var(--rule);color:var(--mid);vertical-align:top;}
+.ext-table tr:hover td{background:rgba(18,16,14,.02);}
+.ext-table td:first-child{color:var(--ink);font-weight:600;}
+.phase-tag{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.p-now {background:rgba(10,122,94,.12);color:var(--sta);}
+.p-q2  {background:rgba(26,95,180,.12);color:var(--flo);}
+.p-q3  {background:rgba(200,131,42,.12);color:var(--gold);}
+.p-fut {background:rgba(107,63,160,.12);color:var(--ai);}
+
+/* LEGACY RF MODEL */
+.rf-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px;}
+.rf-table th{background:var(--ink);color:#f9f7f4;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:10px 14px;text-align:left;}
+.rf-table td{padding:10px 14px;border-bottom:1px solid var(--rule);color:var(--mid);vertical-align:top;}
+.rf-table tr:hover td{background:rgba(18,16,14,.02);}
+.rf-table td:first-child{color:var(--ink);font-weight:600;}
+
+/* EXECUTION PLAN */
+.sprint-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:28px;}
+.sprint{border-radius:6px;border:1px solid var(--rule);padding:20px 20px 16px;position:relative;}
+.sprint-top{height:3px;border-radius:2px;margin-bottom:12px;}
+.sw1 .sprint-top{background:var(--vel);}
+.sw2 .sprint-top{background:var(--flo);}
+.sw3 .sprint-top{background:var(--sta);}
+.sw4 .sprint-top{background:var(--aut);}
+.sw5 .sprint-top{background:var(--ai);}
+.sw6 .sprint-top{background:var(--green);}
+.sprint-wk{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+.sprint-name{font-size:17px;font-weight:800;margin-bottom:4px;}
+.sprint-who{font-size:12px;color:var(--mid);margin-bottom:10px;font-weight:500;}
+.sprint-items{list-style:none;}
+.sprint-items li{font-size:13px;color:var(--mid);padding:3px 0;border-bottom:1px solid var(--rule);line-height:1.5;}
+.sprint-items li:last-child{border-bottom:none;}
+.sprint-items li::before{content:'→ ';color:var(--dim);}
+.sprint-out{margin-top:10px;padding:8px 12px;background:var(--warm);border-radius:3px;font-size:12px;color:var(--mid);}
+.sprint-out strong{color:var(--ink);}
+
+/* ROLES */
+.roles-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:24px;}
+.role-card{background:var(--warm);border-radius:6px;border:1px solid var(--rule);padding:18px;}
+.role-icon{font-size:24px;margin-bottom:8px;}
+.role-title{font-size:14px;font-weight:700;margin-bottom:4px;}
+.role-handle{font-size:11px;color:var(--dim);font-family:'JetBrains Mono',monospace;margin-bottom:10px;}
+.role-items{font-size:12px;color:var(--mid);line-height:1.8;}
+
+/* ROLLOUT STRATEGY */
+.launch-phases{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:24px;}
+.lp{border-radius:6px;border:1px solid var(--rule);padding:22px 18px;}
+.lp1{border-top:3px solid var(--vel);}
+.lp2{border-top:3px solid var(--flo);}
+.lp3{border-top:3px solid var(--sta);}
+.lp-week{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+.lp-title{font-size:18px;font-weight:800;margin-bottom:6px;}
+.lp-desc{font-size:13px;color:var(--mid);line-height:1.6;margin-bottom:10px;}
+.lp-pillars{font-size:12px;color:var(--mid);}
+
+/* INTERVIEW GUIDE */
+.interview-section{margin-bottom:32px;}
+.int-title{font-size:18px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+.int-time{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--warm);padding:2px 8px;border-radius:3px;color:var(--dim);}
+.int-purpose{font-size:13px;color:var(--mid);margin-bottom:12px;line-height:1.6;}
+.q-list{list-style:none;}
+.q-item{padding:10px 14px;border-left:3px solid var(--rule);margin-bottom:6px;background:var(--warm);border-radius:0 4px 4px 0;}
+.q-item:hover{border-left-color:var(--gold);}
+.q-text{font-size:14px;color:var(--ink);font-weight:500;margin-bottom:4px;}
+.q-why{font-size:12px;color:var(--mid);font-style:italic;}
+.q-flag{display:inline-block;padding:1px 6px;border-radius:2px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-right:4px;}
+.q-reg{background:rgba(200,131,42,.1);color:var(--gold);}  /* populates registry */
+.q-imp{background:rgba(200,56,42,.1);color:var(--vel);}    /* key insight */
+.q-rf {background:rgba(10,122,94,.1);color:var(--sta);}    /* RF lever */
+
+/* LEGACY APPROACH */
+.stack-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:24px;}
+.stack-card{border-radius:6px;border:1px solid var(--rule);padding:18px 16px;}
+.sc-type{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.sc-rf{font-size:11px;color:var(--dim);font-family:'JetBrains Mono',monospace;margin-bottom:8px;}
+.sc-levers{font-size:12px;color:var(--mid);line-height:1.7;}
+
+/* REGISTRY INTAKE */
+.intake-steps{display:flex;flex-direction:column;gap:6px;margin-bottom:24px;}
+.istep{display:grid;grid-template-columns:40px 1fr;gap:16px;align-items:flex-start;padding:16px 16px;background:var(--warm);border-radius:4px;border:1px solid var(--rule);}
+.istep-num{font-size:22px;font-weight:800;color:var(--gold);line-height:1;margin-top:2px;}
+.istep-title{font-size:14px;font-weight:700;margin-bottom:4px;}
+.istep-desc{font-size:13px;color:var(--mid);line-height:1.6;}
+.istep-who{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--dim);margin-top:4px;}
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nb">DPI v4.0</span>
+  <a href="#corrections">Corrections</a>
+  <a href="#model">Score Model</a>
+  <a href="#extensible">Extensible Scoring</a>
+  <a href="#legacy">Legacy Apps & RF</a>
+  <a href="#registry-intake">Registry Intake</a>
+  <a href="#rollout">Rollout Plan</a>
+  <a href="#team-plan">Team Execution</a>
+  <a href="#interview">App Owner Guide</a>
+</nav>
+
+<div class="page">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">Final Design · v4.0 · March 2026</div>
+  <h1>DevOps Performance Index<br><span>Final Platform Design</span></h1>
+  <p class="hero-sub">All corrections applied. DataSight as primary metric source. Teambook for team data. Extensible scoring architecture. Legacy app RF model with weighted portfolio targets. Full app owner interview guide for your next 2 days.</p>
+  <div class="kpi-strip">
+    <div class="kpi"><div class="kpi-l">RF / DF (same metric)</div><div class="kpi-v bad">40</div><div class="kpi-n">→ target 280 · from DataSight</div></div>
+    <div class="kpi"><div class="kpi-l">LTDD</div><div class="kpi-v bad">~8d</div><div class="kpi-n">→ target 1.8d · from DataSight</div></div>
+    <div class="kpi"><div class="kpi-l">Data Sources</div><div class="kpi-v neutral">3</div><div class="kpi-n">DataSight · Teambook · GitHub</div></div>
+    <div class="kpi"><div class="kpi-l">Apps in Scope</div><div class="kpi-v neutral">70</div><div class="kpi-n">mixed stacks · weighted RF targets</div></div>
+    <div class="kpi"><div class="kpi-l">Team Size</div><div class="kpi-v neutral">3–4</div><div class="kpi-n">to build + run platform</div></div>
+  </div>
+</div>
+
+<!-- CORRECTIONS -->
+<div class="sec" id="corrections">
+  <div class="eyebrow">Applied Corrections</div>
+  <div class="stitle">What Changed in This Version</div>
+
+  <div class="box-correct">
+    <strong>✓ RF = DF. One metric, one name.</strong> "Release Frequency" and "Deployment Frequency" are the same thing for your service line. Unified as "Release Frequency (RF)" throughout. No distinction needed.
+  </div>
+  <div class="box-correct">
+    <strong>✓ DataSight is the primary metric source for all DORA metrics.</strong> RF, LTDD, CFR, MTTR, automated CRs — all come from DataSight automatically. No GitHub API needed for these. The GitHub connector now only handles Git hygiene checks (branches, PRs, commits) which DataSight does not provide.
+  </div>
+  <div class="box-correct">
+    <strong>✓ Teambook is the source for team/pod details.</strong> Team ID, team lead, pod structure — read from Teambook API. This pre-populates the team section of the App Registry, reducing the manual burden on app owners.
+  </div>
+  <div class="box-correct">
+    <strong>✓ Scoring architecture is now extensible by design.</strong> New sub-metrics (CR auto-creation, release page creation, future automation items) can be added to any pillar without changing the scoring engine. Each sub-metric is a named, weighted entry in a config file — add a line, get a score.
+  </div>
+  <div class="box-warn">
+    <strong>⚠ Legacy/vendor/iSeries apps will have structurally low RF.</strong> The solution is weighted portfolio targets — not uniform 280/70 = 4/week for every app. Modern apps compensate for legacy apps in the portfolio average. Full model in Section 4.
+  </div>
+</div>
+
+<div class="rule"></div>
+
+<!-- SCORE MODEL -->
+<div class="sec" id="model">
+  <div class="eyebrow">Section 01</div>
+  <div class="stitle">DPI Score Model — Final</div>
+  <p class="sdesc">5 pillars. 100 points. DataSight feeds Velocity automatically. Teambook pre-populates team data. GitHub handles git hygiene. Registry fills in manual flags. Source is shown on every sub-metric.</p>
+
+  <div class="box-info">
+    <strong>Source key:</strong>
+    <span class="stag s-ds">DataSight</span> = auto from DataSight &nbsp;
+    <span class="stag s-tb">Teambook</span> = auto from Teambook &nbsp;
+    <span class="stag s-gh">GitHub</span> = auto from GitHub API &nbsp;
+    <span class="stag s-reg">Registry</span> = team declares in app YAML &nbsp;
+    <span class="stag s-man">Manual</span> = champion validates periodically
+  </div>
+
+  <div class="pillars">
+
+    <div class="pc pc-vel">
+      <div class="pc-bar"></div>
+      <div class="pc-pct">30</div>
+      <div class="pc-name">Velocity</div>
+      <div class="pc-src">Primary source: DataSight</div>
+      <div class="pc-items">
+        <span>Release Frequency <span class="stag s-ds">DataSight</span></span>
+        <span>Lead Time to Deploy (LTDD) <span class="stag s-ds">DataSight</span></span>
+        <span>Deployment frequency trend <span class="stag s-ds">DataSight</span></span>
+        <span>Average batch size (PR lines) <span class="stag s-gh">GitHub</span></span>
+        <span>Feature flag usage <span class="stag s-reg">Registry</span></span>
+        <span>Non-prod pipeline release credit <span class="stag s-reg">Registry</span></span>
+      </div>
+      <div class="pc-note">RF and LTDD come directly from DataSight — Velocity is the most auto-populated pillar. Ready to score from Day 1 with zero registry input.</div>
+    </div>
+
+    <div class="pc pc-flo">
+      <div class="pc-bar"></div>
+      <div class="pc-pct">25</div>
+      <div class="pc-name">Flow</div>
+      <div class="pc-src">Primary source: GitHub + DataSight</div>
+      <div class="pc-items">
+        <span>Git hygiene score (all repos avg) <span class="stag s-gh">GitHub</span></span>
+        <span>Git hygiene formally adopted <span class="stag s-reg">Registry</span></span>
+        <span>PR review SLA (&lt;4h) <span class="stag s-gh">GitHub</span></span>
+        <span>Branch age discipline <span class="stag s-gh">GitHub</span></span>
+        <span>Commit message standard <span class="stag s-gh">GitHub</span></span>
+        <span>Pipeline duration avg <span class="stag s-ds">DataSight</span></span>
+        <span>Manual approval gate count <span class="stag s-reg">Registry</span></span>
+        <span>Change failure rate (CFR) <span class="stag s-ds">DataSight</span></span>
+      </div>
+      <div class="pc-note">Git hygiene lives here — it's flow. CFR from DataSight. Approval gate count is the one registry field needed here.</div>
+    </div>
+
+    <div class="pc pc-sta">
+      <div class="pc-bar"></div>
+      <div class="pc-pct">20</div>
+      <div class="pc-name">Stability + Security</div>
+      <div class="pc-src">Primary source: DataSight + GitHub</div>
+      <div class="pc-items">
+        <span>MTTR (P1/P2 incidents) <span class="stag s-ds">DataSight</span></span>
+        <span>Automated rollback <span class="stag s-reg">Registry</span></span>
+        <span>Branch protection rules <span class="stag s-gh">GitHub</span></span>
+        <span>SAST/DAST scan present <span class="stag s-reg">Registry</span></span>
+        <span>Vulnerability count (SonarQube) <span class="stag s-man">Manual</span></span>
+        <span>Test coverage % <span class="stag s-man">Manual</span></span>
+        <span>Priv access reviewed &lt;90d <span class="stag s-reg">Registry</span></span>
+        <span>Priv access required for deploy? <span class="stag s-reg">Registry</span></span>
+        <span>Release page exists &amp; live <span class="stag s-reg">Registry</span></span>
+        <span>Compliance evidence linked <span class="stag s-reg">Registry</span></span>
+      </div>
+      <div class="pc-note">MTTR direct from DataSight. Priv access for deploy = negative score — removes zero-touch blocker incentive.</div>
+    </div>
+
+    <div class="pc pc-aut">
+      <div class="pc-bar"></div>
+      <div class="pc-pct">15</div>
+      <div class="pc-name">Automation</div>
+      <div class="pc-src">Primary source: Registry + DataSight</div>
+      <div class="pc-items">
+        <span>CI automated? Y/N <span class="stag s-reg">Registry</span></span>
+        <span>CD automated? Y/N <span class="stag s-reg">Registry</span></span>
+        <span>Standard pipeline adopted? Y/N <span class="stag s-reg">Registry</span></span>
+        <span>Git hygiene adopted? Y/N <span class="stag s-reg">Registry</span></span>
+        <span>CR auto-creation <span class="stag s-ds">DataSight</span></span>
+        <span>Zero-touch deployment? Y/N <span class="stag s-reg">Registry</span></span>
+        <span>Automated rollback? Y/N <span class="stag s-reg">Registry</span></span>
+        <span>Release page auto-created? <span class="stag s-ds">DataSight</span></span>
+        <span><em>+ future items via config</em></span>
+      </div>
+      <div class="pc-note">CR auto-creation AND release page creation come from DataSight. Future automation items added via scoring config — no engine rebuild needed.</div>
+    </div>
+
+    <div class="pc pc-ai">
+      <div class="pc-bar"></div>
+      <div class="pc-pct">10</div>
+      <div class="pc-name">AI &amp; Adoption</div>
+      <div class="pc-src">Primary source: Registry</div>
+      <div class="pc-items">
+        <span>AI coding agent adopted <span class="stag s-reg">Registry</span></span>
+        <span>AI coding agents usage % <span class="stag s-reg">Registry</span></span>
+        <span>AI-assisted test generation <span class="stag s-reg">Registry</span></span>
+        <span>AI code review tooling <span class="stag s-reg">Registry</span></span>
+        <span>API catalog published <span class="stag s-reg">Registry</span></span>
+        <span>API count declared <span class="stag s-reg">Registry</span></span>
+        <span>Stack declared (for context) <span class="stag s-reg">Registry</span></span>
+      </div>
+      <div class="pc-note">AI coding agents adoption (not just Copilot — any AI agent) is the forward-looking lever. Small weight but highly visible on leaderboard as a differentiator.</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="rule"></div>
+
+<!-- EXTENSIBLE SCORING -->
+<div class="sec" id="extensible">
+  <div class="eyebrow">Section 02</div>
+  <div class="stitle">Extensible Scoring Architecture</div>
+  <p class="sdesc">The scoring engine reads sub-metrics from a config file — not from hardcoded logic. Adding a new automation item (CR auto-creation, release page creation, future items) means adding one line to a YAML config. No code change. No engine rebuild. This is how the platform evolves.</p>
+
+  <div class="box-info">
+    <strong>How it works:</strong> Each pillar has a <code style="font-family:'JetBrains Mono',monospace;font-size:12px;">scoring_config.yaml</code> that lists sub-metrics with a weight and source. The engine loops through whatever is in the config. You add a new metric line, set its weight, set its source, and it appears in the next scoring run — on the leaderboard, in team alerts, and in the detailed breakdown.
+  </div>
+
+  <table class="ext-table">
+    <thead><tr><th>Sub-Metric</th><th>Pillar</th><th>Weight Within Pillar</th><th>Source</th><th>Status</th></tr></thead>
+    <tbody>
+      <!-- NOW -->
+      <tr><td>Release Frequency vs target</td><td>Velocity</td><td>50% of pillar</td><td>DataSight</td><td><span class="phase-tag p-now">Launch</span></td></tr>
+      <tr><td>LTDD vs target</td><td>Velocity</td><td>35% of pillar</td><td>DataSight</td><td><span class="phase-tag p-now">Launch</span></td></tr>
+      <tr><td>Feature flag usage</td><td>Velocity</td><td>15% of pillar</td><td>Registry</td><td><span class="phase-tag p-now">Launch</span></td></tr>
+      <tr><td>Git hygiene score</td><td>Flow</td><td>40% of pillar</td><td>GitHub</td><td><span class="phase-tag p-now">Launch</span></td></tr>
+      <tr><td>PR review SLA</td><td>Flow</td><td>20% of pillar</td><td>GitHub</td><td><span class="phase-tag p-now">Launch</span></td></tr>
+      <tr><td>CFR</td><td>Flow</td><td>20% of pillar</td><td>DataSight</td><td><span class="phase-tag p-now">Launch</span></td></tr>
+      <tr><td>Approval gate count</td><td>Flow</td><td>20% of pillar</td><td>Registry</td><td><span class="phase-tag p-now">Launch</span></td></tr>
+      <tr><td>CI automated Y/N</td><td>Automation</td><td>15% of pillar</td><td>Registry</td><td><span class="phase-tag p-now">Launch</span></td></tr>
+      <tr><td>CD automated Y/N</td><td>Automation</td><td>20% of pillar</td><td>Registry</td><td><span class="phase-tag p-now">Launch</span></td></tr>
+      <tr><td>Standard pipeline Y/N</td><td>Automation</td><td>15% of pillar</td><td>Registry</td><td><span class="phase-tag p-now">Launch</span></td></tr>
+      <tr><td>MTTR</td><td>Stability</td><td>30% of pillar</td><td>DataSight</td><td><span class="phase-tag p-now">Launch</span></td></tr>
+      <tr><td>Branch protection rules</td><td>Stability</td><td>15% of pillar</td><td>GitHub</td><td><span class="phase-tag p-now">Launch</span></td></tr>
+      <tr><td>Priv access reviewed</td><td>Stability</td><td>20% of pillar</td><td>Registry</td><td><span class="phase-tag p-now">Launch</span></td></tr>
+      <!-- Q2 -->
+      <tr><td>CR auto-creation (from DataSight)</td><td>Automation</td><td>15% of pillar</td><td>DataSight</td><td><span class="phase-tag p-q2">Add in Q2</span></td></tr>
+      <tr><td>Release page auto-creation (from DataSight)</td><td>Automation</td><td>15% of pillar</td><td>DataSight</td><td><span class="phase-tag p-q2">Add in Q2</span></td></tr>
+      <tr><td>Zero-touch deployment</td><td>Automation</td><td>20% of pillar</td><td>Registry</td><td><span class="phase-tag p-q2">Add in Q2</span></td></tr>
+      <tr><td>SAST/DAST scan present</td><td>Stability</td><td>15% of pillar</td><td>Registry</td><td><span class="phase-tag p-q2">Add in Q2</span></td></tr>
+      <tr><td>Test coverage %</td><td>Stability</td><td>20% of pillar</td><td>SonarQube</td><td><span class="phase-tag p-q2">Add in Q2</span></td></tr>
+      <!-- Q3 -->
+      <tr><td>AI coding agent adopted</td><td>AI &amp; Adoption</td><td>40% of pillar</td><td>Registry</td><td><span class="phase-tag p-q3">Add in Q3</span></td></tr>
+      <tr><td>AI coding agent usage %</td><td>AI &amp; Adoption</td><td>30% of pillar</td><td>Registry</td><td><span class="phase-tag p-q3">Add in Q3</span></td></tr>
+      <tr><td>API catalog published</td><td>AI &amp; Adoption</td><td>30% of pillar</td><td>Registry</td><td><span class="phase-tag p-q3">Add in Q3</span></td></tr>
+      <!-- Future -->
+      <tr><td>Automated compliance evidence</td><td>Stability</td><td>TBD</td><td>Future tool</td><td><span class="phase-tag p-fut">Future</span></td></tr>
+      <tr><td>AI test generation adoption</td><td>AI &amp; Adoption</td><td>TBD</td><td>Registry</td><td><span class="phase-tag p-fut">Future</span></td></tr>
+      <tr><td>[Any new automation capability]</td><td>Automation</td><td>Config-driven</td><td>DataSight/Registry</td><td><span class="phase-tag p-fut">Add anytime</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="box-insight">
+    <strong>The config-driven pattern:</strong> When DataSight starts providing CR auto-creation data, you simply add one entry to <code style="font-family:'JetBrains Mono',monospace;font-size:12px;">scoring_config.yaml</code> under the Automation pillar: name, weight, source=datasight, field=cr_auto_created. The scoring engine reads this and includes it in the next run. No developer needed after initial build.
+  </div>
+</div>
+
+<div class="rule"></div>
+
+<!-- LEGACY RF MODEL -->
+<div class="sec" id="legacy">
+  <div class="eyebrow">Section 03</div>
+  <div class="stitle">Legacy Apps, Mixed Stacks &amp; the RF Portfolio Model</div>
+  <p class="sdesc">Not every app can hit the same RF target. A vendor-managed iSeries app releasing quarterly is never hitting 4 releases/week — and shouldn't be held to that. Your job as DevOps Champion is a portfolio average of 280. Here's how to model it fairly and how to discuss it with each app owner.</p>
+
+  <div class="box-warn">
+    <strong>The key insight:</strong> You don't need every app to hit 4 releases/week. You need the portfolio average to reach 280/month. That means modern apps need to release MORE to compensate for legacy apps that structurally cannot. This is a portfolio optimisation problem, not a uniform target problem.
+  </div>
+
+  <h3 style="font-size:18px;font-weight:700;margin-bottom:12px;">Stack Categories &amp; RF Expectations</h3>
+  <div class="stack-grid">
+    <div class="stack-card" style="border-top:3px solid var(--green);">
+      <div class="sc-type" style="color:var(--green);">Modern / Cloud-Native</div>
+      <div class="sc-rf">RF target: 8–12/month per app</div>
+      <div class="sc-levers">
+        Feature flags → daily releases<br>
+        Trunk-based dev<br>
+        Full CI/CD automation<br>
+        Zero-touch possible<br>
+        High compensation weight
+      </div>
+    </div>
+    <div class="stack-card" style="border-top:3px solid var(--flo);">
+      <div class="sc-type" style="color:var(--flo);">Traditional / On-Prem</div>
+      <div class="sc-rf">RF target: 4–6/month per app</div>
+      <div class="sc-levers">
+        Smaller batches first<br>
+        CI automation quick win<br>
+        Feature flags for safe release<br>
+        CD possible with work<br>
+        Priv access review needed
+      </div>
+    </div>
+    <div class="stack-card" style="border-top:3px solid var(--gold);">
+      <div class="sc-type" style="color:var(--gold);">Legacy / Stabilised</div>
+      <div class="sc-rf">RF target: 1–2/month per app</div>
+      <div class="sc-levers">
+        Config-only changes count<br>
+        Compliance releases<br>
+        Patch deployments<br>
+        Focus: LTDD reduction<br>
+        DPI score via other pillars
+      </div>
+    </div>
+    <div class="stack-card" style="border-top:3px solid var(--vel);">
+      <div class="sc-type" style="color:var(--vel);">Vendor / iSeries / Fixed</div>
+      <div class="sc-rf">RF target: quarterly + patches</div>
+      <div class="sc-levers">
+        Releases tied to vendor<br>
+        Focus: reduce priv access<br>
+        Improve compliance pillar<br>
+        AI adoption where possible<br>
+        Low RF — compensated by others
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size:18px;font-weight:700;margin-bottom:12px;">Portfolio Weighted Target Model</h3>
+  <table class="rf-table">
+    <thead><tr><th>Stack Category</th><th>Est. App Count</th><th>RF Target/App/Month</th><th>Portfolio RF Contribution</th><th>DPI Velocity Score Basis</th></tr></thead>
+    <tbody>
+      <tr><td>Modern / Cloud-Native</td><td>~15 apps</td><td>10/month</td><td>150/month</td><td>Scored vs 10/month target</td></tr>
+      <tr><td>Traditional / On-Prem</td><td>~25 apps</td><td>5/month</td><td>125/month</td><td>Scored vs 5/month target</td></tr>
+      <tr><td>Legacy / Stabilised</td><td>~20 apps</td><td>1.5/month</td><td>30/month</td><td>Scored vs 1.5/month target. LTDD weighted higher.</td></tr>
+      <tr><td>Vendor / iSeries / Fixed</td><td>~10 apps</td><td>0.5/month</td><td>5/month</td><td>RF excluded. Scored on other pillars only.</td></tr>
+      <tr style="background:rgba(10,122,94,.05);"><td><strong>TOTAL PORTFOLIO</strong></td><td><strong>70 apps</strong></td><td>—</td><td><strong>310/month</strong></td><td><strong>Headroom above 280 target ✓</strong></td></tr>
+    </tbody>
+  </table>
+
+  <div class="box-correct">
+    <strong>How to explain this to individual app owners:</strong> "Your app's velocity score is measured against a target set for your stack type — not against every other app. A legacy app hitting its 1.5/month target gets full velocity score. A modern app missing its 10/month target loses score. The portfolio average is my responsibility. Your responsibility is hitting your stack-appropriate target."
+  </div>
+
+  <div class="box-insight">
+    <strong>For vendor/iSeries apps with no RF:</strong> Their DPI score is calculated on the remaining 4 pillars only, re-weighted to sum to 100. Their RF is excluded from the portfolio total. They still appear on the leaderboard and can improve through Flow, Stability, Automation, and AI pillars — giving the team an active path to improvement despite the RF constraint.
+  </div>
+</div>
+
+<div class="rule"></div>
+
+<!-- REGISTRY INTAKE -->
+<div class="sec" id="registry-intake">
+  <div class="eyebrow">Section 04</div>
+  <div class="stitle">App Registry — Intake Plan</div>
+  <p class="sdesc">Getting 70 apps registered is the #1 critical path item. Here's how to do it in 2 weeks with 3–4 people, using a lightweight Google Form or Jira intake process that feeds directly into the YAML registry.</p>
+
+  <h3 style="font-size:18px;font-weight:700;margin-bottom:14px;">Step-by-Step Intake Process</h3>
+  <div class="intake-steps">
+    <div class="istep">
+      <div class="istep-num">1</div>
+      <div>
+        <div class="istep-title">Pre-populate from Teambook + DataSight</div>
+        <div class="istep-desc">Pull team/pod data from Teambook (team ID, team lead name, email). Pull app names and existing RF/LTDD data from DataSight. Create one pre-filled YAML stub per app — 70 files with what you already know. App owners only fill in what's missing.</div>
+        <div class="istep-who">Owner: Person 1 · Time: 2 days</div>
+      </div>
+    </div>
+    <div class="istep">
+      <div class="istep-num">2</div>
+      <div>
+        <div class="istep-title">Send a short Google Form (not a YAML) to each app owner</div>
+        <div class="istep-desc">Do NOT ask app owners to edit YAML files. Create a Google Form (or Jira issue per app) with exactly 12 questions — the minimum needed to compute a baseline DPI score. Everything else has defaults. Champion fills the form with them during the 1:1 meeting you're already having.</div>
+        <div class="istep-who">Owner: Champion + Person 2 · Time: During app owner meetings (next 2 days)</div>
+      </div>
+    </div>
+    <div class="istep">
+      <div class="istep-num">3</div>
+      <div>
+        <div class="istep-title">Person 3 converts form responses to YAML files in real-time</div>
+        <div class="istep-desc">As each meeting ends and the form is submitted, Person 3 has a script that converts the Google Form CSV export directly into app YAML files. PR raised, you approve, it's in the registry within 24 hours of each meeting.</div>
+        <div class="istep-who">Owner: Person 3 · Time: Parallel to meetings</div>
+      </div>
+    </div>
+    <div class="istep">
+      <div class="istep-num">4</div>
+      <div>
+        <div class="istep-title">Person 4 runs first baseline DPI score against whatever is registered</div>
+        <div class="istep-desc">Don't wait for all 70 apps. After 20 apps are in, run the first score. Publish a partial leaderboard. This creates urgency for remaining app owners to submit their data — they don't want to be missing from the leaderboard.</div>
+        <div class="istep-who">Owner: Person 4 · Time: End of Week 1</div>
+      </div>
+    </div>
+    <div class="istep">
+      <div class="istep-num">5</div>
+      <div>
+        <div class="istep-title">Registry completeness as a DPI metric itself</div>
+        <div class="istep-desc">Teams with incomplete registry entries get a visible "Registry Incomplete ⚠️" flag on the leaderboard and their score is shown as "N/A" rather than 0. This is more motivating than a zero — people hate N/A more than a low score.</div>
+        <div class="istep-who">Owner: Champion · Time: At first leaderboard publish</div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size:18px;font-weight:700;margin-bottom:12px;">The 12 Minimum Required Form Questions</h3>
+  <div class="box-info">These 12 answers + Teambook + DataSight give you enough to compute a baseline DPI score for any app. Everything else is optional at intake and can be enriched over time.</div>
+
+  <table class="ext-table">
+    <thead><tr><th>#</th><th>Question</th><th>Populates</th><th>Default if blank</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>What is your app's primary function in 1 sentence?</td><td>display_name context</td><td>—</td></tr>
+      <tr><td>2</td><td>What is the primary tech stack? (Java/Spring, .NET, Node, Python, iSeries, Vendor, Other)</td><td>stack · RF target tier</td><td>"other"</td></tr>
+      <tr><td>3</td><td>Is this app in production today?</td><td>in_production · RF credit model</td><td>true</td></tr>
+      <tr><td>4</td><td>List all Git repos for this app (org name + repo name per repo)</td><td>repos list in registry</td><td>Must complete</td></tr>
+      <tr><td>5</td><td>Is CI automated? (builds trigger automatically on push)</td><td>ci_automated</td><td>false</td></tr>
+      <tr><td>6</td><td>Is CD automated? (deployments trigger automatically after CI)</td><td>cd_automated</td><td>false</td></tr>
+      <tr><td>7</td><td>Have you adopted the org standard pipeline template?</td><td>standard_pipeline_adopted</td><td>false</td></tr>
+      <tr><td>8</td><td>Does deploying to production require a human with privileged access?</td><td>priv_access_for_deploy</td><td>true</td></tr>
+      <tr><td>9</td><td>When was privileged access last formally reviewed? (date)</td><td>priv_access_reviewed_date</td><td>"never"</td></tr>
+      <tr><td>10</td><td>How many manual approval gates exist in your current pipeline?</td><td>approval_gate_count</td><td>3</td></tr>
+      <tr><td>11</td><td>Is your release champion the same as the team lead? If not, who is it?</td><td>release_champion</td><td>same as team_lead</td></tr>
+      <tr><td>12</td><td>What is the single biggest blocker to releasing more frequently?</td><td>Not scored — used in app owner conversation analysis</td><td>—</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="rule"></div>
+
+<!-- ROLLOUT STRATEGY -->
+<div class="sec" id="rollout">
+  <div class="eyebrow">Section 05</div>
+  <div class="stitle">Rollout Strategy — Phased Launch</div>
+  <p class="sdesc">Launch Velocity + Flow immediately (DataSight + GitHub give you this data with no registry needed). Show "coming soon" for Stability and Automation until registry data is collected. This gives teams a real leaderboard within 2 weeks while the platform is still being built.</p>
+
+  <div class="launch-phases">
+    <div class="lp lp1">
+      <div class="lp-week">Week 1–2 · Launch</div>
+      <div class="lp-title">🚀 Velocity + Flow Live</div>
+      <div class="lp-desc">DataSight gives you RF and LTDD immediately. GitHub gives you git hygiene with no registry needed. CFR from DataSight. Enough to publish a real leaderboard with 2 meaningful pillars.</div>
+      <div class="lp-pillars">
+        ✅ Velocity (30pts) — DataSight live<br>
+        ✅ Flow — Git hygiene portion (GitHub)<br>
+        🔜 Stability — coming Week 4<br>
+        🔜 Automation — coming Week 4<br>
+        🔜 AI &amp; Adoption — coming Month 2
+      </div>
+    </div>
+    <div class="lp lp2">
+      <div class="lp-week">Week 3–4 · Enrich</div>
+      <div class="lp-title">📊 All 5 Pillars Live</div>
+      <div class="lp-desc">App registry data collected in meetings (Weeks 1–2). Registry YAML files generated. Registry feeds Stability and Automation scores. First full DPI score published.</div>
+      <div class="lp-pillars">
+        ✅ Velocity — full<br>
+        ✅ Flow — full (registry adds approval gates)<br>
+        ✅ Stability — registry fields live<br>
+        ✅ Automation — Y/N flags live<br>
+        🔜 AI &amp; Adoption — Month 2
+      </div>
+    </div>
+    <div class="lp lp3">
+      <div class="lp-week">Month 2+ · Evolve</div>
+      <div class="lp-title">🏆 Full Platform + Gamification</div>
+      <div class="lp-desc">AI & Adoption pillar live. League tiers assigned. Sprint challenges start. CR auto-creation and release page creation added to Automation scoring via config. Platform fully self-sustaining.</div>
+      <div class="lp-pillars">
+        ✅ All 5 pillars<br>
+        ✅ League system active<br>
+        ✅ Badge achievements<br>
+        ✅ CR/release page in Automation<br>
+        ✅ Config-driven new metrics
+      </div>
+    </div>
+  </div>
+
+  <div class="box-correct">
+    <strong>Why "phased" beats "all at once":</strong> Launching with incomplete data across all pillars gives some teams a 0 score for Automation simply because their registry isn't filled in yet — they'll rightfully complain the score is unfair. Launching Velocity + Flow first means every team sees a real, data-backed score from day one. Registry data enriches the score over the following 2 weeks. The leaderboard gets more complete — not less fair.
+  </div>
+</div>
+
+<div class="rule"></div>
+
+<!-- TEAM EXECUTION PLAN -->
+<div class="sec" id="team-plan">
+  <div class="eyebrow">Section 06</div>
+  <div class="stitle">3–4 Person Execution Plan</div>
+  <p class="sdesc">How to split the work across a small team from today to first leaderboard. Weeks are from the day you start, not calendar weeks.</p>
+
+  <div class="roles-grid">
+    <div class="role-card">
+      <div class="role-icon">🔌</div>
+      <div class="role-title">Person 1 — Data Engineer</div>
+      <div class="role-handle">DataSight + Teambook connector</div>
+      <div class="role-items">
+        Connects to DataSight API<br>
+        Pulls RF, LTDD, CFR, MTTR<br>
+        Connects to Teambook API<br>
+        Pre-populates registry stubs<br>
+        Owns scoring data pipeline
+      </div>
+    </div>
+    <div class="role-card">
+      <div class="role-icon">🐙</div>
+      <div class="role-title">Person 2 — GitHub Engineer</div>
+      <div class="role-handle">GitHub hygiene checker</div>
+      <div class="role-items">
+        Adapts hygiene_checker.py<br>
+        Connects to GitHub Enterprise<br>
+        Runs first hygiene scan<br>
+        Validates multi-org support<br>
+        Owns git metric pipeline
+      </div>
+    </div>
+    <div class="role-card">
+      <div class="role-icon">📋</div>
+      <div class="role-title">Person 3 — Registry Lead</div>
+      <div class="role-handle">App registry &amp; intake</div>
+      <div class="role-items">
+        Creates registry Git repo<br>
+        Builds Google Form → YAML converter<br>
+        Attends app owner meetings<br>
+        Converts responses to YAMLs<br>
+        Validates registry entries
+      </div>
+    </div>
+    <div class="role-card">
+      <div class="role-icon">📊</div>
+      <div class="role-title">Person 4 — Score &amp; UX</div>
+      <div class="role-handle">Scoring engine + leaderboard</div>
+      <div class="role-items">
+        Builds score_engine.py<br>
+        Wires scoring config YAML<br>
+        Builds HTML leaderboard<br>
+        Sets up weekly scheduler<br>
+        Owns output &amp; gamification
+      </div>
+    </div>
+  </div>
+
+  <div class="sprint-grid">
+    <div class="sprint sw1">
+      <div class="sprint-top"></div>
+      <div class="sprint-wk">Week 0 · Today–Day 2</div>
+      <div class="sprint-name">App Owner Meetings</div>
+      <div class="sprint-who">Champion + Person 3</div>
+      <ul class="sprint-items">
+        <li>Meet all 70 app owners (2 days)</li>
+        <li>Use the interview guide below</li>
+        <li>Fill Google Form for each app</li>
+        <li>Capture blocker for each app</li>
+        <li>Identify Modern vs Legacy split</li>
+      </ul>
+      <div class="sprint-out"><strong>Output:</strong> 70 form responses, blocker map, stack classification list</div>
+    </div>
+
+    <div class="sprint sw2">
+      <div class="sprint-top"></div>
+      <div class="sprint-wk">Week 1 · Days 3–7</div>
+      <div class="sprint-name">Data Connections</div>
+      <div class="sprint-who">Persons 1, 2, 3</div>
+      <ul class="sprint-items">
+        <li>P1: DataSight API connection + data pull</li>
+        <li>P1: Teambook API connection</li>
+        <li>P2: GitHub hygiene checker adapted</li>
+        <li>P3: Registry repo created, form → YAML converter built</li>
+        <li>P3: First 20 YAML files from meeting responses</li>
+      </ul>
+      <div class="sprint-out"><strong>Output:</strong> DataSight data flowing, 20+ apps in registry, hygiene checks running</div>
+    </div>
+
+    <div class="sprint sw3">
+      <div class="sprint-top"></div>
+      <div class="sprint-wk">Week 2 · Days 8–12</div>
+      <div class="sprint-name">First Leaderboard</div>
+      <div class="sprint-who">All 4 persons</div>
+      <ul class="sprint-items">
+        <li>P4: Score engine wired to DataSight + GitHub</li>
+        <li>P4: Velocity + Flow scores computed</li>
+        <li>P4: HTML leaderboard built</li>
+        <li>P3: Remaining registry YAMLs completed</li>
+        <li>Champion: Review, validate, publish</li>
+      </ul>
+      <div class="sprint-out"><strong>Output:</strong> First leaderboard live. Velocity + Flow for all 70 apps. Champion sends to all team leads.</div>
+    </div>
+
+    <div class="sprint sw4">
+      <div class="sprint-top"></div>
+      <div class="sprint-wk">Week 3 · Days 13–17</div>
+      <div class="sprint-name">Full DPI Score</div>
+      <div class="sprint-who">Persons 1, 4</div>
+      <ul class="sprint-items">
+        <li>P4: Add Stability + Automation pillars</li>
+        <li>P4: Registry fields feeding scores</li>
+        <li>P1: Scoring config YAML finalised</li>
+        <li>P4: League tiers assigned</li>
+        <li>Champion: First tier review meeting</li>
+      </ul>
+      <div class="sprint-out"><strong>Output:</strong> Full 4-pillar DPI score live. League assignments published. First alerts sent to team leads.</div>
+    </div>
+
+    <div class="sprint sw5">
+      <div class="sprint-top"></div>
+      <div class="sprint-wk">Week 4 · Days 18–21</div>
+      <div class="sprint-name">Alerts + Automation</div>
+      <div class="sprint-who">Persons 2, 4</div>
+      <ul class="sprint-items">
+        <li>P2: Hygiene alerts to team leads live</li>
+        <li>P4: Weekly scheduler configured</li>
+        <li>P4: Badge trigger logic built</li>
+        <li>All: Jenkins integration for pipeline data</li>
+        <li>Champion: First Sprint Challenge announced</li>
+      </ul>
+      <div class="sprint-out"><strong>Output:</strong> Weekly automated pipeline running. Alerts flowing. Badges starting to trigger.</div>
+    </div>
+
+    <div class="sprint sw6">
+      <div class="sprint-top"></div>
+      <div class="sprint-wk">Month 2 · Weeks 5–8</div>
+      <div class="sprint-name">AI Pillar + Gamification</div>
+      <div class="sprint-who">Champion lead</div>
+      <ul class="sprint-items">
+        <li>AI &amp; Adoption pillar live (registry data)</li>
+        <li>CR auto-creation added via scoring config</li>
+        <li>Release page creation added via scoring config</li>
+        <li>Full league system + rivalry mechanics</li>
+        <li>First monthly tier review published</li>
+      </ul>
+      <div class="sprint-out"><strong>Output:</strong> Full 5-pillar DPI. Gamification running. Platform fully self-sustaining.</div>
+    </div>
+  </div>
+</div>
+
+<div class="rule"></div>
+
+<!-- APP OWNER INTERVIEW GUIDE -->
+<div class="sec" id="interview">
+  <div class="eyebrow">Section 07 · For Your Next 2 Days</div>
+  <div class="stitle">App Owner Interview Guide</div>
+  <p class="sdesc">Use this in every 1:1 over the next 2 days. Each meeting should be 30–45 minutes. The goal: understand the individual levers, classify the app, fill the 12 registry questions, and leave each owner with a personal improvement target they believe in. Person 3 sits in every meeting and fills the form in real-time.</p>
+
+  <div class="box-warn">
+    <strong>Meeting setup:</strong> Don't send this as a form in advance. Do it live in the meeting. Pre-populate what you already know from DataSight (their current RF, LTDD). Open with their data — it shows you've done your homework and immediately makes the conversation concrete.
+  </div>
+
+  <!-- OPENING -->
+  <div class="interview-section">
+    <div class="int-title">Opening <span class="int-time">5 min</span></div>
+    <div class="int-purpose">Set the tone. This is not a performance review. It's a problem-solving session. You own the portfolio target. They own their app's levers.</div>
+    <ul class="q-list">
+      <li class="q-item">
+        <div class="q-text">"Your app is currently at [X] releases/month and [Y] days LTDD from DataSight. Your stack is [Z]. Before we talk targets, I want to understand your world — what does a release actually look like for your team today, end to end?"</div>
+        <div class="q-why">Opens them up. You're asking about process, not judging the number. Gets them talking about reality, not aspiration.</div>
+      </li>
+      <li class="q-item">
+        <div class="q-text">"Walk me through the last release you did — from the point a developer merged their code to the point it was in production. What happened, who was involved, how long did it take?"</div>
+        <div class="q-why"><span class="q-flag q-imp">KEY</span> This one question will reveal more blockers than any checklist. Listen for: manual steps, waiting time, who needs to approve, what can fail.</div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- BLOCKER DISCOVERY -->
+  <div class="interview-section">
+    <div class="int-title">Blocker Discovery <span class="int-time">10 min</span></div>
+    <div class="int-purpose">Find the actual constraint — not the assumed one. Most teams know what's slowing them down. They just haven't been asked in a structured way.</div>
+    <ul class="q-list">
+      <li class="q-item">
+        <div class="q-text">"If I could remove one thing from your release process tomorrow, what would make the biggest difference to how often you can release?"</div>
+        <div class="q-why"><span class="q-flag q-rf">RF Lever</span> The single most important question. Write down the exact words they use — this becomes their personal improvement target.</div>
+      </li>
+      <li class="q-item">
+        <div class="q-text">"How many people need to approve a release before it goes to production? Are any of those approvals automated or are they all manual sign-offs?"</div>
+        <div class="q-why"><span class="q-flag q-reg">Registry</span> Populates approval_gate_count. Also surfaces culture blockers (fear of releasing) vs. process blockers.</div>
+      </li>
+      <li class="q-item">
+        <div class="q-text">"Does someone with privileged or elevated access need to be involved in the actual deployment step? Could you deploy without them if you needed to?"</div>
+        <div class="q-why"><span class="q-flag q-reg">Registry</span> <span class="q-flag q-imp">KEY</span> Populates priv_access_for_deploy. This is often the single biggest blocker to zero-touch — many teams don't realise it until you ask directly.</div>
+      </li>
+      <li class="q-item">
+        <div class="q-text">"How big are your typical code changes when you release? Are you releasing lots of small changes or batching up big ones? Why?"</div>
+        <div class="q-why"><span class="q-flag q-rf">RF Lever</span> Reveals batching behaviour. If they're batching, it's usually because releasing feels risky or expensive. That's the real problem to solve.</div>
+      </li>
+      <li class="q-item">
+        <div class="q-text">"What happens after a failed deployment? How long does it take to roll back or fix forward, and who's involved?"</div>
+        <div class="q-why">Surfaces MTTR reality and whether rollback is automated. Teams with painful rollbacks release less often because failure is expensive.</div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- PIPELINE & STACK -->
+  <div class="interview-section">
+    <div class="int-title">Pipeline &amp; Stack Reality <span class="int-time">8 min</span></div>
+    <div class="int-purpose">Understand what they have, what's automated, and whether the standard pipeline applies to them. Critical for the registry Y/N flags.</div>
+    <ul class="q-list">
+      <li class="q-item">
+        <div class="q-text">"Does your CI build trigger automatically when a developer pushes code? Or does someone need to manually kick it off?"</div>
+        <div class="q-why"><span class="q-flag q-reg">Registry</span> ci_automated Y/N. Sounds basic — surprising how many teams still have manual CI triggers.</div>
+      </li>
+      <li class="q-item">
+        <div class="q-text">"After CI passes, does deployment happen automatically, or does someone manually push a button to deploy?"</div>
+        <div class="q-why"><span class="q-flag q-reg">Registry</span> cd_automated Y/N. Even "we have a pipeline" teams often have a manual trigger for the actual deploy step.</div>
+      </li>
+      <li class="q-item">
+        <div class="q-text">"Are you on the org standard pipeline template? If not, what's different about your pipeline and what would need to change to adopt the standard?"</div>
+        <div class="q-why"><span class="q-flag q-reg">Registry</span> <span class="q-flag q-imp">KEY</span> Standard pipeline adoption is a quick win that unlocks a score improvement AND forces the conversation about what's blocking adoption.</div>
+      </li>
+      <li class="q-item">
+        <div class="q-text">"What's your tech stack — is it primarily [Java/Spring / .NET / Node / Python / iSeries / vendor-managed / something else]? Are there multiple stacks across your repos?"</div>
+        <div class="q-why"><span class="q-flag q-reg">Registry</span> Populates stack field. Also helps you set the right RF target tier for this app in the portfolio model.</div>
+      </li>
+      <li class="q-item">
+        <div class="q-text">"For your legacy or vendor-managed components — what does a change to those look like? Who controls the release schedule?"</div>
+        <div class="q-why">Critical for legacy apps. If a vendor controls releases, RF is not their lever. Redirect to LTDD and other pillars instead.</div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- TARGETS & LEVERS -->
+  <div class="interview-section">
+    <div class="int-title">Setting Personal Targets <span class="int-time">8 min</span></div>
+    <div class="int-purpose">This is the most important part. You want them to leave with a target they believe is achievable and three concrete actions that will get them there. Don't impose the target — co-create it.</div>
+    <ul class="q-list">
+      <li class="q-item">
+        <div class="q-text">"Based on what you've told me — your stack, your current RF, your blockers — I'm thinking a realistic target for your app is [X] releases/month in 3 months. Does that feel right, too low, or impossible?"</div>
+        <div class="q-why"><span class="q-flag q-imp">KEY</span> Let them react. If they say impossible — that's the conversation. If they say "too easy" — push them higher. The target they co-create will be owned, not resisted.</div>
+      </li>
+      <li class="q-item">
+        <div class="q-text">"If you hit [X] releases/month by Month 3, what would need to be true about your pipeline that isn't true today? Let's list the 3 most important changes."</div>
+        <div class="q-why"><span class="q-flag q-rf">RF Lever</span> Works backwards from the target. Makes the path concrete. These 3 things become their personal action plan tracked in the DPI score.</div>
+      </li>
+      <li class="q-item">
+        <div class="q-text">"What would make you hesitate to release more often, even if the pipeline was perfect? Is there a cultural or political reason releases are batched up?"</div>
+        <div class="q-why">Surfaces fear of releasing — often the real constraint behind every technical blocker. If the answer is "my manager wants a big release for visibility" — that's a leadership conversation you now know you need to have.</div>
+      </li>
+      <li class="q-item">
+        <div class="q-text">"What support do you need from me — as DevOps Champion — that would make the biggest difference in the next 4 weeks?"</div>
+        <div class="q-why">Ends the conversation in a collaborative mode. Shows you're here to unblock, not to inspect. Answers to this question are your priority action list after the meetings.</div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- AI & ADOPTION -->
+  <div class="interview-section">
+    <div class="int-title">AI &amp; Automation Adoption <span class="int-time">5 min</span></div>
+    <div class="int-purpose">Quick pulse check on where they are with AI tooling. Not a hard ask — a curiosity question. Sets the stage for the AI & Adoption pillar.</div>
+    <ul class="q-list">
+      <li class="q-item">
+        <div class="q-text">"Is anyone on your team using AI coding tools — Copilot, Cursor, any AI agent — in their day-to-day development work? Officially or informally?"</div>
+        <div class="q-why"><span class="q-flag q-reg">Registry</span> Populates copilot_enabled / ai_tools_declared. "Informally" answers reveal shadow AI adoption you can help formalise.</div>
+      </li>
+      <li class="q-item">
+        <div class="q-text">"If I could get you access to an AI coding agent for your whole team tomorrow, what's the first thing you'd use it for — writing tests, code review, documentation, something else?"</div>
+        <div class="q-why">Forward-looking. Shows AI is an offer, not a mandate. Their answer tells you how mature their AI thinking is and what training/enablement they'd need.</div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- CLOSING -->
+  <div class="interview-section">
+    <div class="int-title">Closing &amp; Registry Confirmation <span class="int-time">4 min</span></div>
+    <div class="int-purpose">Confirm the registry data is captured, set expectations for what happens next, and end on a clear commitment from both sides.</div>
+    <ul class="q-list">
+      <li class="q-item">
+        <div class="q-text">"[Person 3] has captured your app details and will create your DPI profile in the registry. You'll receive it for review by [date]. The first leaderboard goes live [Week 2]. Any questions about how you'll be scored?"</div>
+        <div class="q-why">Sets clear expectations. Removes the fear of the unknown score. They know when they'll see it and can ask questions now rather than complain later.</div>
+      </li>
+      <li class="q-item">
+        <div class="q-text">"One last thing: who is your Release Champion — the person on your team who will be the go-to for hitting your RF target? It doesn't have to be you."</div>
+        <div class="q-why"><span class="q-flag q-reg">Registry</span> Populates release_champion. Distributing accountability below the team lead level is critical at scale. This is the person who'll receive the weekly hygiene alerts.</div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="box-info">
+    <strong>After the meeting — what to do with the answers:</strong><br>
+    1. Person 3 converts form response to YAML within 4 hours.<br>
+    2. You review the "biggest blocker" answers across all 70 apps — patterns will emerge (e.g. "30 apps say privileged access is their #1 blocker"). That pattern becomes your next mandate.<br>
+    3. Stack classification drives the RF target per app in the portfolio model.<br>
+    4. Apps where "vendor controls releases" are flagged as RF-excluded in the registry (their DPI is computed on 4 pillars, not 5).<br>
+    5. The 3 personal improvement actions per app become the "recommended actions" shown on each team's DPI score card.
+  </div>
+</div>
+
+<div style="text-align:center;padding:48px 0 0;font-size:12px;color:var(--dim);font-family:'JetBrains Mono',monospace;border-top:1px solid var(--rule);margin-top:48px;">
+  DPI Intelligence Platform · Final Design v4.0 · March 2026 · Confidential
+</div>
+
+</div>
+</body>
+</html>
